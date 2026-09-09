@@ -8,7 +8,9 @@
 
 export const OFFICIAL_TRAILERS: Record<string, { key: string; name: string }> = {
   "iron-man": { key: "8ugaeA-nMTc", name: "Official Trailer" },
-  "iron-man-2": { key: "BoohRoGLflE", name: "Official Trailer" },
+  // iron-man-2: no official studio trailer on YouTube (checked Marvel
+  // Entertainment + Paramount, the 2010 distributor — only third-party
+  // uploads exist). Falls back to the comic-plate placeholder.
   "the-incredible-hulk": { key: "dz6eBeW19Lg", name: "Official Trailer" },
   "thor": { key: "JOddp-nlNvQ", name: "Official Trailer" },
   "captain-america-the-first-avenger": { key: "JerVrbLldXw", name: "Official Trailer" },
@@ -111,7 +113,9 @@ export const OFFICIAL_TRAILERS: Record<string, { key: string; name: string }> = 
   "blade": { key: "O2Y3FFFIvRI", name: "Official Trailer" },
   "blade-ii": { key: "vAIBFzaxz4E", name: "Official Trailer" },
   "daredevil-2003": { key: "2SUxOgQ0T9o", name: "Official Trailer" },
-  "hulk-2003": { key: "xdugq4pxPYE", name: "Official Trailer" },
+  // hulk-2003: no official trailer on Universal Pictures' YouTube channel
+  // (only scene clips, verified via direct channel search) — only
+  // third-party uploads exist. Falls back to the comic-plate placeholder.
   "blade-trinity": { key: "qcHEDGs7eAY", name: "Official Trailer" },
   "the-punisher-2004": { key: "8R4odMHycN4", name: "Official Trailer" },
   "fantastic-four-2005": { key: "QMrelVao8j0", name: "Official Trailer" },
