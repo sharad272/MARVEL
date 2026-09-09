@@ -17,11 +17,20 @@ export function prepareSqliteUrl() {
   const dest = "/tmp/marvelverse.db";
 
   try {
-    if (fs.existsSync(src)) {
-      fs.copyFileSync(src, dest);
+    if (fs.existsSync(dest)) {
+      // Already staged by an earlier request on this warm instance.
       process.env.DATABASE_URL = `file:${dest}`;
+      return;
     }
-  } catch {
-    // Keep the original URL; reads may still work from the bundle.
+    if (!fs.existsSync(src)) {
+      console.error(
+        `[sqlite] bundled db not found at "${src}" (cwd="${process.cwd()}") — falling back to "${raw}"`
+      );
+      return;
+    }
+    fs.copyFileSync(src, dest);
+    process.env.DATABASE_URL = `file:${dest}`;
+  } catch (err) {
+    console.error("[sqlite] failed to stage db into /tmp:", err);
   }
 }
