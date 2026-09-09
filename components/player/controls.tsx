@@ -158,11 +158,17 @@ export function PlayerControls({
           </IconButton>
         )}
 
-        <IconButton onClick={() => actions.seekBy(-10)} label="Back 10 seconds (j)">
+        <IconButton
+          onClick={() => actions.seekBy(-10)}
+          label="Back 10 seconds (j)"
+          className="hidden min-[400px]:grid"
+        >
           <RotateCcw className="h-[18px] w-[18px]" />
         </IconButton>
 
-        {/* Volume: the slider expands on hover, as it does on YouTube. */}
+        {/* Volume: the slider expands on hover, as it does on YouTube.
+            On phones only the mute toggle is shown — the slider needs a
+            hover/pointer, and the bar is already tight. */}
         <div className="group/vol flex items-center">
           <IconButton onClick={actions.toggleMute} label={state.muted ? "Unmute (m)" : "Mute (m)"}>
             {state.muted || state.volume === 0 ? (
@@ -181,7 +187,7 @@ export function PlayerControls({
             value={state.muted ? 0 : state.volume}
             onChange={(e) => actions.setVolume(Number(e.target.value))}
             aria-label="Volume"
-            className="scrubber ml-1 h-1 w-0 rounded-full transition-all duration-200 group-hover/vol:w-16 focus-visible:w-16"
+            className="scrubber ml-1 hidden h-1 w-0 rounded-full transition-all duration-200 group-hover/vol:w-16 focus-visible:w-16 sm:block"
             style={{
               background: `linear-gradient(to right, var(--c-primary) ${
                 (state.muted ? 0 : state.volume) * 100

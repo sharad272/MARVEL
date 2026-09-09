@@ -98,11 +98,22 @@ export function Player({
 
   const controlsVisible = !idle || state.status !== "playing";
 
+  useEffect(() => {
+    if (viewMode !== "fullscreen" || document.fullscreenElement) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [viewMode]);
+
   return (
     <div
       className={cn(
-        "relative w-full overflow-hidden bg-black",
-        viewMode === "fullscreen" ? "h-dvh" : "aspect-video",
+        "relative w-full overflow-hidden bg-black [touch-action:manipulation]",
+        viewMode === "fullscreen"
+          ? "fixed inset-0 z-[100] h-[100dvh] w-full"
+          : "aspect-video",
         idle && state.status === "playing" && "player-idle",
         className
       )}
@@ -149,7 +160,7 @@ export function Player({
       )}
 
       {/* --- Centre affordances ----------------------------------------- */}
-      {(state.status === "idle" || state.status === "paused") && (
+      {(state.status === "idle" || state.status === "ready" || state.status === "paused") && (
         <button
           type="button"
           onClick={() => void actions.play()}

@@ -103,7 +103,7 @@ export class YouTubeEngine extends BaseEngine {
       this.player = new window.YT.Player(mount, {
         videoId: this.videoKey,
         playerVars: {
-            autoplay: 1,
+            autoplay: 0,
           controls: 0, // our control bar is the only one
           disablekb: 1, // our keyboard handler owns shortcuts
           modestbranding: 1,

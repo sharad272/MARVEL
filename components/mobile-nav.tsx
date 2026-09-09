@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clapperboard, Compass, Library, Sparkles } from "lucide-react";
+import { Clapperboard, Compass, Library, Sparkles, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -12,6 +12,12 @@ const TABS = [
     label: "Browse",
     icon: Compass,
     match: (p: string) => p.startsWith("/browse") || p.startsWith("/timeline"),
+  },
+  {
+    href: "/characters",
+    label: "Heroes",
+    icon: Users,
+    match: (p: string) => p.startsWith("/characters"),
   },
   { href: "/ask", label: "Ask", icon: Sparkles, match: (p: string) => p.startsWith("/ask") },
   {
@@ -31,7 +37,7 @@ export function MobileNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-ink-950/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
       aria-label="Primary"
     >
-      <ul className="grid h-14 grid-cols-4">
+      <ul className="grid h-14 grid-cols-5">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
           const Icon = tab.icon;

@@ -84,7 +84,12 @@ export function usePlayer({
     if (autoplayed.current) return;
     if (state.status === "ready") {
       autoplayed.current = true;
-      void engineRef.current?.play();
+      // iOS/Android block unmuted autoplay. Don't fight that — the
+      // centre Play button covers `ready` the same as `idle`.
+      const allowAutoplay =
+        typeof window !== "undefined" &&
+        window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+      if (allowAutoplay) void engineRef.current?.play();
     }
   }, [state.status]);
 
@@ -149,13 +154,23 @@ export function usePlayer({
   const toggleFullscreen = useCallback(async () => {
     const el = containerRef.current;
     if (!el) return;
+    const cssToggle = () =>
+      setViewMode((m) => (m === "fullscreen" ? "default" : "fullscreen"));
+
+    // iPhone Safari has no Fullscreen API on arbitrary elements. Fall
+    // back to a fixed-position "theater" that still fills the viewport.
+    if (!document.fullscreenEnabled || !el.requestFullscreen) {
+      cssToggle();
+      return;
+    }
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
+      else if (viewMode === "fullscreen") cssToggle();
       else await el.requestFullscreen();
     } catch {
-      // Denied without a user gesture, or unsupported. Nothing to recover.
+      cssToggle();
     }
-  }, [containerRef]);
+  }, [containerRef, viewMode]);
 
   useEffect(() => {
     const onChange = () =>

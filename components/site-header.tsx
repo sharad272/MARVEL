@@ -106,7 +106,7 @@ export function SiteHeader() {
       </div>
 
       {menuOpen && (
-        <nav className="animate-fade-in max-h-[min(80dvh,calc(100dvh-4rem-env(safe-area-inset-bottom)))] overflow-y-auto border-t border-white/10 bg-ink-950/95 px-4 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur-xl md:hidden">
+        <nav className="animate-fade-in fixed inset-x-0 top-[calc(3.5rem+env(safe-area-inset-top))] bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 overflow-y-auto border-t border-white/10 bg-ink-950 px-4 py-3 md:hidden">
           {NAV.map((item) => (
             <Link
               key={item.href}

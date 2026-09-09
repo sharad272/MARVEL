@@ -215,7 +215,7 @@ function FilterRow({ label, children }: { label: string; children: React.ReactNo
       <span className="w-16 shrink-0 text-[11px] font-bold uppercase tracking-widest text-white/30 sm:w-20">
         {label}
       </span>
-      <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
+      <div className="rail flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
         {children}
       </div>
     </div>

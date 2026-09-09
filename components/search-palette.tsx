@@ -39,7 +39,12 @@ export function SearchPalette() {
   useEffect(() => {
     if (open) {
       const id = requestAnimationFrame(() => inputRef.current?.focus());
-      return () => cancelAnimationFrame(id);
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        cancelAnimationFrame(id);
+        document.body.style.overflow = prev;
+      };
     }
   }, [open]);
 
@@ -125,9 +130,9 @@ export function SearchPalette() {
                 type="button"
                 onClick={close}
                 aria-label="Close search"
-                className="grid h-8 w-8 place-items-center rounded-full text-white/40 hover:bg-white/10 hover:text-white"
+                className="grid h-11 w-11 place-items-center rounded-full text-white/40 hover:bg-white/10 hover:text-white"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </form>
 
@@ -171,7 +176,7 @@ export function SearchPalette() {
                       <button
                         type="button"
                         onClick={() => go(t.slug, true)}
-                        className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-black"
+                        className="inline-flex min-h-9 items-center gap-1 rounded-full bg-white px-3 py-2 text-[11px] font-bold text-black"
                       >
                         <Play className="h-3 w-3 fill-current" />
                         Play

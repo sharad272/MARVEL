@@ -39,7 +39,7 @@ export function LibraryButtons({ titleId, initialStatus, initialFavorite }: Prop
   const watched = status === LIBRARY_STATUS.WATCHED;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <button
         type="button"
         disabled={saving}

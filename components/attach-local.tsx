@@ -83,7 +83,7 @@ export function AttachLocal({
             </p>
           ) : (
             <form onSubmit={submit} className="space-y-2">
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <input
                   value={filePath}
                   onChange={(e) => setFilePath(e.target.value)}

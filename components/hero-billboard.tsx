@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Play, Info, Star } from "lucide-react";
 import { getCharacter, themeVars } from "@/lib/characters";
 import { CoverArt } from "@/components/cover-art";
@@ -26,6 +26,7 @@ export function HeroBillboard({
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const [listed, setListed] = useState(() => new Set(watchlistIds));
+  const swipeX = useRef<number | null>(null);
 
   const go = useCallback(
     (i: number) => setActive(((i % titles.length) + titles.length) % titles.length),
@@ -54,10 +55,23 @@ export function HeroBillboard({
       style={themeVars(theme)}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
-      className="relative min-h-[min(92svh,640px)] w-full overflow-hidden sm:min-h-[86vh]"
+      onTouchStart={(e) => {
+        swipeX.current = e.changedTouches[0]?.clientX ?? null;
+        setPaused(true);
+      }}
+      onTouchEnd={(e) => {
+        const start = swipeX.current;
+        swipeX.current = null;
+        if (start == null || titles.length < 2) return;
+        const dx = (e.changedTouches[0]?.clientX ?? start) - start;
+        if (Math.abs(dx) > 48) go(active + (dx < 0 ? 1 : -1));
+      }}
+      className="relative min-h-[min(92svh,640px)] w-full sm:min-h-[86vh]"
     >
-      {/* Wallpaper stack. All slides stay mounted and cross-fade, so the
-          browser never has to re-decode a backdrop mid-rotation. */}
+      {/* Wallpaper is clipped so Ken-Burns scale never spills; the copy
+          layer below is not, so Play/More-info can't get chopped off on
+          short phone viewports. */}
+      <div className="absolute inset-0 overflow-hidden">
       {titles.map((t, i) => {
         const nearby =
           i === active ||
@@ -91,11 +105,11 @@ export function HeroBillboard({
           </div>
         );
       })}
-
       <div className="hero-scrim absolute inset-0" />
       <div className="hero-tint absolute inset-0" />
+      </div>
 
-      <div className="relative flex min-h-[min(92svh,640px)] items-end pb-[calc(4.5rem+env(safe-area-inset-bottom))] pt-[calc(5.5rem+env(safe-area-inset-top))] sm:min-h-[86vh] sm:pb-20 sm:pt-28">
+      <div className="relative flex min-h-[min(92svh,640px)] items-end pb-[calc(5.25rem+env(safe-area-inset-bottom))] pt-[calc(5.5rem+env(safe-area-inset-top))] sm:min-h-[86vh] sm:pb-20 sm:pt-28">
         <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-10">
           <div key={current.id} className="max-w-2xl animate-slide-up">
             <div className="mb-4 flex items-center gap-2.5">
@@ -165,7 +179,7 @@ export function HeroBillboard({
             </div>
 
             {current.overview && (
-              <p className="clamp-3 mb-6 max-w-xl text-pretty text-[15px] leading-relaxed text-white/75 sm:mb-7">
+              <p className="clamp-2 mb-5 max-w-xl text-pretty text-[15px] leading-relaxed text-white/75 sm:clamp-3 sm:mb-7">
                 {current.overview}
               </p>
             )}
