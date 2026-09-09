@@ -11,6 +11,7 @@ const steps = [
   ["npx", "prisma", "db", "push"],
   ["npx", "tsx", "scripts/seed.ts"],
   ["npx", "tsx", "scripts/refresh-catalog.ts"],
+  ["node", "scripts/generate-db-blob.mjs"],
   ["npx", "next", "build"],
 ];
 
