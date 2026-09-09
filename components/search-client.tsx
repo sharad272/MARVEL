@@ -5,6 +5,7 @@ import { Search, Sparkles, Loader2 } from "lucide-react";
 import { TitleCard } from "@/components/title-card";
 import { WatcherLoader } from "@/components/watcher-loader";
 import { cn } from "@/lib/utils";
+import { useLlmEnabled } from "@/lib/llm/use-status";
 import type { TitleCard as TitleCardData } from "@/lib/queries";
 
 const EXAMPLES = [
@@ -26,6 +27,7 @@ export function SearchClient({
   initialResults: TitleCardData[];
   llmEnabled: boolean;
 }) {
+  const liveEnabled = useLlmEnabled(llmEnabled);
   const [query, setQuery] = useState(initialQuery);
   const [mode, setMode] = useState<Mode>("instant");
   const [results, setResults] = useState<TitleCardData[]>(initialResults);
@@ -121,14 +123,22 @@ export function SearchClient({
                   ? "Describe it however you remember it…"
                   : "Search titles and descriptions…"
               }
-              className="w-full rounded-full border border-white/12 bg-white/[0.06] py-4 pl-14 pr-16 text-base text-white placeholder:text-white/30 focus:border-marvel focus:outline-none focus:ring-0 sm:pr-32"
+              className="w-full rounded-full border border-white/12 bg-white/[0.06] py-4 pl-14 pr-[4.25rem] text-base text-white placeholder:text-white/30 focus:border-marvel focus:outline-none focus:ring-0 sm:pr-32"
             />
             <button
               type="submit"
               disabled={loading}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-primary-grad px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+              aria-label="Search"
+              className="absolute right-2 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-primary-grad text-sm font-bold text-white disabled:opacity-60 sm:w-auto sm:px-5"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Search className="h-4 w-4 sm:hidden" />
+                  <span className="hidden sm:inline">Search</span>
+                </>
+              )}
             </button>
           </div>
 
@@ -145,12 +155,12 @@ export function SearchClient({
             <ModeChip
               active={mode === "ai"}
               onClick={() => {
-                if (!llmEnabled) return;
+                if (!liveEnabled) return;
                 setMode("ai");
                 if (query.trim().length >= 2) void runAi(query);
               }}
-              disabled={!llmEnabled}
-              title={llmEnabled ? undefined : "Set HF_TOKEN to enable"}
+              disabled={!liveEnabled}
+              title={liveEnabled ? undefined : "Ask the Watcher is unavailable"}
             >
               <Sparkles className="mr-1 inline h-3 w-3" />
               Ask in plain English
@@ -166,7 +176,7 @@ export function SearchClient({
                 type="button"
                 onClick={() => {
                   setQuery(ex);
-                  if (llmEnabled) {
+                  if (liveEnabled) {
                     setMode("ai");
                     void runAi(ex);
                   } else {
@@ -215,7 +225,7 @@ export function SearchClient({
           !loading && (
             <p className="py-16 text-center text-white/40">
               Nothing found for &ldquo;{query}&rdquo;.
-              {mode === "instant" && llmEnabled && (
+              {mode === "instant" && liveEnabled && (
                 <>
                   {" "}
                   Try{" "}

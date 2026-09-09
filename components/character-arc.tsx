@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Sparkles, Play } from "lucide-react";
 import { WatcherLoader } from "@/components/watcher-loader";
 import { consumeSse } from "@/lib/llm/consume-sse";
+import { isSse, llmPost, readLlmJson } from "@/lib/llm/browser";
+import { useLlmEnabled } from "@/lib/llm/use-status";
 
 type Arc = {
   summary: string;
@@ -22,6 +24,7 @@ export function CharacterArc({
   llmEnabled?: boolean;
   autoStart?: boolean;
 }) {
+  const liveEnabled = useLlmEnabled(llmEnabled);
   const [arc, setArc] = useState<Arc | null>(null);
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState(false);
@@ -37,28 +40,31 @@ export function CharacterArc({
     setError(null);
     setArc({ summary: "", beats: [] });
     try {
-      const res = await fetch("/api/llm/arc", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          accept: "text/event-stream",
-        },
-        cache: "no-store",
-        signal: ac.signal,
-        body: JSON.stringify({ slug, stream: true }),
-      });
-      await consumeSse(res, (event) => {
-        if (event.type === "delta" && event.field === "answer") {
-          setArc((cur) => ({
-            summary: (cur?.summary ?? "") + event.text,
-            beats: cur?.beats ?? [],
-          }));
-        } else if (event.type === "beats") {
-          setArc((cur) => ({ summary: cur?.summary ?? "", beats: event.beats }));
-        } else if (event.type === "error") {
-          setError(event.error);
-        }
-      });
+      let res = await llmPost("/api/llm/arc", { slug }, ac.signal);
+      if (!isSse(res)) {
+        const json = await readLlmJson<Arc>(res);
+        setArc({ summary: json.summary ?? "", beats: json.beats ?? [] });
+        return;
+      }
+      try {
+        await consumeSse(res, (event) => {
+          if (event.type === "delta" && event.field === "answer") {
+            setArc((cur) => ({
+              summary: (cur?.summary ?? "") + event.text,
+              beats: cur?.beats ?? [],
+            }));
+          } else if (event.type === "beats") {
+            setArc((cur) => ({ summary: cur?.summary ?? "", beats: event.beats }));
+          } else if (event.type === "error") {
+            setError(event.error);
+          }
+        });
+      } catch (streamErr) {
+        if ((streamErr as Error).name === "AbortError") throw streamErr;
+        res = await llmPost("/api/llm/arc", { slug }, ac.signal, true);
+        const json = await readLlmJson<Arc>(res);
+        setArc({ summary: json.summary ?? "", beats: json.beats ?? [] });
+      }
     } catch (e) {
       if ((e as Error).name === "AbortError") return;
       setError((e as Error).message);
@@ -71,15 +77,15 @@ export function CharacterArc({
   };
 
   useEffect(() => {
-    if (autoStart && llmEnabled) void load();
+    if (autoStart && liveEnabled) void load();
     return () => abortRef.current?.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoStart, llmEnabled, slug]);
+  }, [autoStart, liveEnabled, slug]);
 
-  if (!llmEnabled) {
+  if (!liveEnabled) {
     return (
       <p className="rounded-xl border border-white/10 bg-ink-850 p-4 text-sm text-white/50">
-        Character arcs need a Hugging Face token. You can still browse every appearance below.
+        Character arcs are unavailable right now. You can still browse every appearance below.
       </p>
     );
   }

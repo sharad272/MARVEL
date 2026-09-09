@@ -1,8 +1,11 @@
+import { connection } from "next/server";
 import { AskClient } from "@/components/ask-client";
+import { isHosted } from "@/lib/env";
 import { hasLlm } from "@/lib/llm/groq";
 import { getCatalogStats } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 export const maxDuration = 90;
 
 export const metadata = {
@@ -13,6 +16,7 @@ export const metadata = {
 type Search = { searchParams: Promise<{ q?: string }> };
 
 export default async function AskPage({ searchParams }: Search) {
+  await connection();
   const stats = await getCatalogStats();
   const { q } = await searchParams;
   const query = q?.trim() ?? "";
@@ -36,7 +40,7 @@ export default async function AskPage({ searchParams }: Search) {
       <AskClient
         enabled={hasLlm()}
         initialQuery={query}
-        hosted={Boolean(process.env.VERCEL)}
+        hosted={isHosted()}
       />
     </div>
   );

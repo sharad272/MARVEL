@@ -7,6 +7,8 @@ import { ResultStrip } from "@/components/result-strip";
 import { WatcherLoader } from "@/components/watcher-loader";
 import type { TitleCard } from "@/lib/queries";
 import { consumeSse } from "@/lib/llm/consume-sse";
+import { isSse, llmPost, preferJsonLlm, readLlmJson } from "@/lib/llm/browser";
+import { useLlmEnabled } from "@/lib/llm/use-status";
 
 type Beat = { slug: string; beat: string; name?: string };
 
@@ -44,6 +46,7 @@ export function AskClient({
   initialQuery?: string;
   hosted?: boolean;
 }) {
+  const liveEnabled = useLlmEnabled(enabled);
   const starter = initialQuery.trim();
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -73,19 +76,40 @@ export function AskClient({
       return [...t, { question: q, answer: "", titles: [], streaming: true }];
     });
 
-    try {
-      const res = await fetch("/api/llm/ask", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          accept: "text/event-stream",
-        },
-        cache: "no-store",
-        signal,
-        body: JSON.stringify({ query: q, stream: true }),
+    const applyJson = (json: Turn) => {
+      setTurns((t) => {
+        const next = [...t];
+        const last = next.length - 1;
+        if (last < 0) return next;
+        next[last] = {
+          ...next[last],
+          kind: json.kind,
+          answer: json.answer ?? "",
+          recap: json.recap,
+          titles: json.titles ?? [],
+          essential: json.essential,
+          helpful: json.helpful,
+          beats: json.beats,
+          slug: json.slug,
+          name: json.name,
+          followups: json.followups,
+          streaming: false,
+          error: undefined,
+        };
+        return next;
       });
+    };
 
-      await consumeSse(res, (event) => {
+    try {
+      let res = await llmPost("/api/llm/ask", { query: q }, signal);
+
+      if (!isSse(res)) {
+        applyJson(await readLlmJson<Turn>(res));
+        return;
+      }
+
+      try {
+        await consumeSse(res, (event) => {
         setTurns((t) => {
           const next = [...t];
           const last = next.length - 1;
@@ -112,7 +136,12 @@ export function AskClient({
           }
           return next;
         });
-      });
+        });
+      } catch (streamErr) {
+        if ((streamErr as Error).name === "AbortError") throw streamErr;
+        res = await llmPost("/api/llm/ask", { query: q }, signal, true);
+        applyJson(await readLlmJson<Turn>(res));
+      }
     } catch (e) {
       if ((e as Error).name === "AbortError") return;
       setTurns((t) => {
@@ -140,7 +169,7 @@ export function AskClient({
   };
 
   useEffect(() => {
-    if (!enabled || !starter) return;
+    if (!liveEnabled || !starter) return;
     const ac = new AbortController();
     void ask(starter, ac.signal);
     return () => {
@@ -148,18 +177,21 @@ export function AskClient({
       inFlight.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [starter, enabled]);
+  }, [starter, liveEnabled]);
 
-  if (!enabled) {
+  if (!liveEnabled) {
+    const onPhone = preferJsonLlm();
     return (
       <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-5">
-        <p className="font-semibold text-amber-300">No model configured</p>
+        <p className="font-semibold text-amber-300">Ask the Watcher is offline</p>
         <p className="mt-2 text-sm leading-relaxed text-amber-200/75">
-          {hosted ? (
+          {onPhone || hosted ? (
             <>
-              Add <code className="rounded bg-black/30 px-1.5 py-0.5 text-xs">HF_TOKEN</code> in
-              the Vercel project Environment Variables (Production and Preview), then redeploy.
-              Instant search still works without it.
+              Instant search still works.{" "}
+              <Link href="/search" className="font-semibold text-amber-100 underline underline-offset-2">
+                Search titles
+              </Link>{" "}
+              while this is unavailable.
             </>
           ) : (
             <>
@@ -266,7 +298,7 @@ export function AskClient({
           e.preventDefault();
           void ask(input);
         }}
-        className="sticky bottom-[calc(4.25rem+env(safe-area-inset-bottom))] mt-8 md:bottom-4"
+        className="sticky bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-30 mt-8 md:bottom-4"
       >
         <div className="relative">
           <input

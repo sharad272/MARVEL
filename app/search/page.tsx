@@ -1,14 +1,17 @@
+import { connection } from "next/server";
 import { SearchClient } from "@/components/search-client";
 import { searchTitles } from "@/lib/queries";
 import { hasLlm } from "@/lib/llm/groq";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata = { title: "Search" };
 
 type Search = { searchParams: Promise<{ q?: string }> };
 
 export default async function SearchPage({ searchParams }: Search) {
+  await connection();
   const { q } = await searchParams;
   const initial = q ? await searchTitles(q, 30) : [];
 

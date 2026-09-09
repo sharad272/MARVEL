@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -31,6 +32,7 @@ import { withOfficialVideos } from "@/lib/videos";
 import { hasLlm } from "@/lib/llm/groq";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -45,6 +47,7 @@ export async function generateMetadata({ params }: Params) {
 }
 
 export default async function TitlePage({ params }: Params) {
+  await connection();
   const { slug } = await params;
   const title = await getTitleBySlug(slug);
   if (!title) notFound();
@@ -71,7 +74,8 @@ export default async function TitlePage({ params }: Params) {
   return (
     <div style={themeVars(theme)}>
       {/* --- Wallpaper header ------------------------------------------- */}
-      <div className="relative min-h-[min(88svh,620px)] w-full overflow-hidden sm:min-h-[68vh]">
+      <div className="relative min-h-[min(88svh,620px)] w-full sm:min-h-[68vh]">
+        <div className="absolute inset-0 overflow-hidden">
         <CoverArt
           alt=""
           variant="backdrop"
@@ -84,8 +88,9 @@ export default async function TitlePage({ params }: Params) {
         />
         <div className="hero-scrim absolute inset-0" />
         <div className="hero-tint absolute inset-0" />
+        </div>
 
-        <div className="relative mx-auto flex min-h-[min(88svh,620px)] max-w-[1500px] items-end px-4 pb-8 pt-[calc(5.5rem+env(safe-area-inset-top))] sm:min-h-[68vh] sm:px-6 sm:pb-10 sm:pt-28 lg:px-10">
+        <div className="relative mx-auto flex min-h-[min(88svh,620px)] max-w-[1500px] items-end px-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] pt-[calc(5.5rem+env(safe-area-inset-top))] sm:min-h-[68vh] sm:px-6 sm:pb-10 sm:pt-28 lg:px-10">
           <div className="flex w-full items-end gap-4 sm:gap-8">
             <div className="relative aspect-[2/3] w-[112px] shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/15 sm:w-[210px]">
               <CoverArt
@@ -173,7 +178,7 @@ export default async function TitlePage({ params }: Params) {
               </div>
 
               {title.overview && (
-                <p className="mb-7 max-w-2xl text-pretty leading-relaxed text-white/80">
+                <p className="mb-6 max-w-2xl text-pretty leading-relaxed text-white/80 max-sm:clamp-3 sm:mb-7">
                   {title.overview}
                 </p>
               )}

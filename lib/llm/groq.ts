@@ -5,6 +5,8 @@
  * via the router). Groq remains a fallback if only GROQ_API_KEY is set.
  */
 
+import { runtimeEnv } from "@/lib/env";
+
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
   content: string;
@@ -47,7 +49,7 @@ export function llmModel(): string {
   try {
     return config().model;
   } catch {
-    return process.env.LLM_MODEL?.trim() || "openai/gpt-oss-120b";
+    return runtimeEnv("LLM_MODEL") || "openai/gpt-oss-120b";
   }
 }
 
@@ -61,39 +63,37 @@ export function llmProviderLabel(): string {
 
 function readKey(): string {
   return (
-    process.env.HF_TOKEN?.trim() ||
-    process.env.HUGGINGFACE_API_KEY?.trim() ||
-    process.env.GROQ_API_KEY?.trim() ||
-    ""
+    runtimeEnv("HF_TOKEN") ||
+    runtimeEnv("HUGGINGFACE_API_KEY") ||
+    runtimeEnv("GROQ_API_KEY")
   );
 }
 
 function config(): LlmConfig {
-  const hf =
-    process.env.HF_TOKEN?.trim() || process.env.HUGGINGFACE_API_KEY?.trim();
+  const hf = runtimeEnv("HF_TOKEN") || runtimeEnv("HUGGINGFACE_API_KEY");
   if (hf) {
     return {
       provider: "huggingface",
       apiKey: hf,
-      baseUrl: (process.env.HF_BASE_URL || "https://router.huggingface.co/v1").replace(
+      baseUrl: (runtimeEnv("HF_BASE_URL") || "https://router.huggingface.co/v1").replace(
         /\/$/,
         ""
       ),
-      model: process.env.LLM_MODEL?.trim() || "openai/gpt-oss-120b",
+      model: runtimeEnv("LLM_MODEL") || "openai/gpt-oss-120b",
     };
   }
 
-  const groq = process.env.GROQ_API_KEY?.trim();
+  const groq = runtimeEnv("GROQ_API_KEY");
   if (!groq) throw new LlmUnavailableError("No LLM API key is configured.");
 
   return {
     provider: "groq",
     apiKey: groq,
-    baseUrl: (process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1").replace(
+    baseUrl: (runtimeEnv("GROQ_BASE_URL") || "https://api.groq.com/openai/v1").replace(
       /\/$/,
       ""
     ),
-    model: process.env.GROQ_MODEL?.trim() || process.env.LLM_MODEL?.trim() || "openai/gpt-oss-120b",
+    model: runtimeEnv("GROQ_MODEL") || runtimeEnv("LLM_MODEL") || "openai/gpt-oss-120b",
   };
 }
 
@@ -187,19 +187,19 @@ async function complete(
         );
       }
       if (res.status === 402) {
-        const groqFallback = process.env.GROQ_API_KEY?.trim();
+        const groqFallback = runtimeEnv("GROQ_API_KEY");
         if (allowFallback && cfg.provider === "huggingface" && groqFallback) {
           return complete(
             {
               provider: "groq",
               apiKey: groqFallback,
-              baseUrl: (process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1").replace(
+              baseUrl: (runtimeEnv("GROQ_BASE_URL") || "https://api.groq.com/openai/v1").replace(
                 /\/$/,
                 ""
               ),
               model:
-                process.env.GROQ_MODEL?.trim() ||
-                process.env.LLM_MODEL?.trim() ||
+                runtimeEnv("GROQ_MODEL") ||
+                runtimeEnv("LLM_MODEL") ||
                 "openai/gpt-oss-120b",
             },
             messages,
@@ -300,19 +300,19 @@ async function* streamComplete(
         );
       }
       if (res.status === 402) {
-        const groqFallback = process.env.GROQ_API_KEY?.trim();
+        const groqFallback = runtimeEnv("GROQ_API_KEY");
         if (allowFallback && cfg.provider === "huggingface" && groqFallback) {
           yield* streamComplete(
             {
               provider: "groq",
               apiKey: groqFallback,
-              baseUrl: (process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1").replace(
+              baseUrl: (runtimeEnv("GROQ_BASE_URL") || "https://api.groq.com/openai/v1").replace(
                 /\/$/,
                 ""
               ),
               model:
-                process.env.GROQ_MODEL?.trim() ||
-                process.env.LLM_MODEL?.trim() ||
+                runtimeEnv("GROQ_MODEL") ||
+                runtimeEnv("LLM_MODEL") ||
                 "openai/gpt-oss-120b",
             },
             messages,

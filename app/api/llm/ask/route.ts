@@ -14,6 +14,13 @@ const schema = z.object({
   stream: z.boolean().optional(),
 });
 
+export async function GET() {
+  return NextResponse.json(
+    { enabled: hasLlm() },
+    { headers: { "Cache-Control": "no-store, max-age=0" } }
+  );
+}
+
 export async function POST(request: Request) {
   if (!hasLlm()) {
     return NextResponse.json(

@@ -1,7 +1,9 @@
+import { connection } from "next/server";
 import { Check, X, Database, Sparkles, Globe, CalendarClock } from "lucide-react";
 import { db } from "@/lib/db";
 import { getCatalogStats } from "@/lib/queries";
 import { hasTmdbKey } from "@/lib/tmdb/client";
+import { isHosted } from "@/lib/env";
 import { hasLlm, llmModel, llmProviderLabel } from "@/lib/llm/groq";
 import { formatRelative } from "@/lib/utils";
 import { formatAsOf } from "@/lib/clock";
@@ -9,6 +11,7 @@ import { getMediaRoot } from "@/lib/media/root";
 import { MediaRootForm } from "@/components/media-root-form";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata = { title: "Settings" };
 
@@ -18,6 +21,7 @@ export const metadata = { title: "Settings" };
  * integrations are live and what the last sync actually did.
  */
 export default async function SettingsPage() {
+  await connection();
   const region = process.env.WATCH_REGION?.trim() || "US";
   const model = llmModel();
   const mediaRoot = await getMediaRoot();
@@ -81,7 +85,7 @@ export default async function SettingsPage() {
           detail={
             hasLlm()
               ? "Powers natural-language search, spoiler-free recaps, watch-order advice and character arcs."
-              : process.env.VERCEL
+              : isHosted()
                 ? "Add HF_TOKEN in Vercel Environment Variables (Production and Preview), then redeploy. Everything else works without it."
                 : "Set HF_TOKEN in .env.local to enable Ask the Watcher, recaps and character arcs. Everything else works without it."
           }
