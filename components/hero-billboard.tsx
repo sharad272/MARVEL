@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { Play, Info, Star } from "lucide-react";
 import { getCharacter, themeVars } from "@/lib/characters";
-import { ArtFallback } from "@/components/art-fallback";
+import { CoverArt } from "@/components/cover-art";
 import { WatchlistIconButton } from "@/components/library-buttons";
-import { backdropUrl, logoUrl, youtubeThumb } from "@/lib/tmdb/images";
+import { logoUrl } from "@/lib/tmdb/images";
 import { officialTrailer } from "@/lib/videos";
 import { cn, formatRuntime, formatYear } from "@/lib/utils";
 import type { TitleCard } from "@/lib/queries";
@@ -63,9 +63,7 @@ export function HeroBillboard({
           i === active ||
           i === (active + 1) % titles.length ||
           i === (active - 1 + titles.length) % titles.length;
-        const src = nearby ? backdropUrl(t.backdropPath, "w1280") : null;
         const yt = nearby ? officialTrailer(t.slug) : null;
-        const ytSrc = yt ? youtubeThumb(yt.key, "max") : null;
         return (
           <div
             key={t.id}
@@ -75,31 +73,20 @@ export function HeroBillboard({
               i === active ? "opacity-100" : "opacity-0"
             )}
           >
-            {src ? (
-              <Image
-                src={src}
+            {nearby ? (
+              <CoverArt
                 alt=""
-                fill
-                priority={i === 0}
-                quality={75}
+                variant="backdrop"
+                backdropPath={t.backdropPath}
+                youtubeKey={yt?.key}
+                themeSlug={t.themeSlug}
                 sizes="100vw"
+                priority={i === 0}
                 className={cn(
                   "object-cover object-top motion-safe:transition-transform motion-safe:duration-[9000ms] motion-safe:ease-linear",
                   i === active ? "sm:scale-105" : "scale-100"
                 )}
               />
-            ) : ytSrc ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={ytSrc}
-                alt=""
-                className={cn(
-                  "h-full w-full object-cover object-top motion-safe:transition-transform motion-safe:duration-[9000ms] motion-safe:ease-linear",
-                  i === active ? "sm:scale-105" : "scale-100"
-                )}
-              />
-            ) : nearby ? (
-              <ArtFallback name="" themeSlug={t.themeSlug} variant="backdrop" />
             ) : null}
           </div>
         );

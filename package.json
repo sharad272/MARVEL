@@ -20,6 +20,8 @@
     "refresh": "tsx scripts/refresh-catalog.ts",
     "refresh:force": "tsx scripts/refresh-catalog.ts --force",
     "check:llm": "tsx scripts/check-llm.ts",
+    "check:trailers": "tsx scripts/check-trailer-keys.mjs",
+    "check:art": "tsx scripts/check-missing-art.mjs",
     "setup": "npm run db:generate && npm run db:push && npm run seed"
   },
   "dependencies": {

@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { getTitleBySlug, pickFeaturedVideo } from "@/lib/queries";
 import { getCharacter, themeVars } from "@/lib/characters";
-import { ArtFallback } from "@/components/art-fallback";
-import { backdropUrl, logoUrl, posterUrl, providerLogoUrl, youtubeThumb } from "@/lib/tmdb/images";
+import { CoverArt } from "@/components/cover-art";
+import { logoUrl, providerLogoUrl, youtubeThumb } from "@/lib/tmdb/images";
 import {
   AVAILABILITY_LABEL,
   FRANCHISE_META,
@@ -53,9 +53,6 @@ export default async function TitlePage({ params }: Params) {
   const videos = withOfficialVideos(title.slug, title.videos);
   const featured = pickFeaturedVideo(videos);
   const region = process.env.WATCH_REGION?.trim() || "US";
-  const ytArt = featured ? youtubeThumb(featured.youtubeKey, "max") : null;
-  const backdrop = backdropUrl(title.backdropPath) ?? ytArt;
-  const poster = posterUrl(title.posterPath, "w780");
   const franchise = FRANCHISE_META[title.franchise as Franchise];
 
   const streaming = title.availability.filter((a) =>
@@ -75,29 +72,32 @@ export default async function TitlePage({ params }: Params) {
     <div style={themeVars(theme)}>
       {/* --- Wallpaper header ------------------------------------------- */}
       <div className="relative min-h-[min(88svh,620px)] w-full overflow-hidden sm:min-h-[68vh]">
-        {backdrop ? (
-          <Image src={backdrop} alt="" fill priority quality={75} sizes="100vw" className="object-cover object-top" />
-        ) : (
-          <ArtFallback name="" themeSlug={title.themeSlug} variant="backdrop" />
-        )}
+        <CoverArt
+          alt=""
+          variant="backdrop"
+          backdropPath={title.backdropPath}
+          youtubeKey={featured?.youtubeKey}
+          themeSlug={title.themeSlug}
+          sizes="100vw"
+          priority
+          className="object-cover object-top"
+        />
         <div className="hero-scrim absolute inset-0" />
         <div className="hero-tint absolute inset-0" />
 
         <div className="relative mx-auto flex min-h-[min(88svh,620px)] max-w-[1500px] items-end px-4 pb-8 pt-[calc(5.5rem+env(safe-area-inset-top))] sm:min-h-[68vh] sm:px-6 sm:pb-10 sm:pt-28 lg:px-10">
           <div className="flex w-full items-end gap-4 sm:gap-8">
             <div className="relative aspect-[2/3] w-[112px] shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/15 sm:w-[210px]">
-              {poster ? (
-                <Image src={poster} alt={title.name} fill sizes="210px" quality={75} className="object-cover" />
-              ) : ytArt ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={ytArt} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <ArtFallback
-                  name={title.name}
-                  themeSlug={title.themeSlug}
-                  badge={title.phase ? `Phase ${title.phase}` : title.franchise}
-                />
-              )}
+              <CoverArt
+                alt={title.name}
+                name={title.name}
+                posterPath={title.posterPath}
+                posterSize="w780"
+                youtubeKey={featured?.youtubeKey}
+                themeSlug={title.themeSlug}
+                badge={title.phase ? `Phase ${title.phase}` : title.franchise}
+                sizes="210px"
+              />
             </div>
 
             <div className="min-w-0 flex-1">

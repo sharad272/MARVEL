@@ -32,7 +32,17 @@ export function providerLogoUrl(path: string | null | undefined) {
   return path ? `${IMG}/w92${path}` : null;
 }
 
-/** YouTube thumbnail, used for video rails without hitting the TMDB API. */
-export function youtubeThumb(key: string, quality: "hq" | "max" = "max") {
+/**
+ * YouTube thumbnail, used for video rails without hitting the TMDB API.
+ *
+ * Defaults to "hq" (hqdefault, 480x360) because it's generated for every
+ * video. "max" (maxresdefault, up to 1280x720) only exists for videos
+ * uploaded at sufficient resolution — when it's missing, YouTube can
+ * return a tiny ~120x90 placeholder with a 200 status instead of a 404,
+ * which silently defeats naive onError fallbacks. Callers that want to
+ * try for the sharper size (e.g. CoverArt) must opt in explicitly and
+ * handle that soft-failure themselves.
+ */
+export function youtubeThumb(key: string, quality: "hq" | "max" = "hq") {
   return `https://i.ytimg.com/vi/${key}/${quality === "max" ? "maxresdefault" : "hqdefault"}.jpg`;
 }
