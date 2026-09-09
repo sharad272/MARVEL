@@ -38,9 +38,11 @@ const SUGGESTIONS = [
 export function AskClient({
   enabled,
   initialQuery = "",
+  hosted = false,
 }: {
   enabled: boolean;
   initialQuery?: string;
+  hosted?: boolean;
 }) {
   const starter = initialQuery.trim();
   const [input, setInput] = useState("");
@@ -153,9 +155,19 @@ export function AskClient({
       <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-5">
         <p className="font-semibold text-amber-300">No model configured</p>
         <p className="mt-2 text-sm leading-relaxed text-amber-200/75">
-          Set <code className="rounded bg-black/30 px-1.5 py-0.5 text-xs">HF_TOKEN</code> in{" "}
-          <code className="rounded bg-black/30 px-1.5 py-0.5 text-xs">.env.local</code> and restart
-          the dev server. Instant search still works without it.
+          {hosted ? (
+            <>
+              Add <code className="rounded bg-black/30 px-1.5 py-0.5 text-xs">HF_TOKEN</code> in
+              the Vercel project Environment Variables (Production and Preview), then redeploy.
+              Instant search still works without it.
+            </>
+          ) : (
+            <>
+              Set <code className="rounded bg-black/30 px-1.5 py-0.5 text-xs">HF_TOKEN</code> in{" "}
+              <code className="rounded bg-black/30 px-1.5 py-0.5 text-xs">.env.local</code> and
+              restart the dev server. Instant search still works without it.
+            </>
+          )}
         </p>
       </div>
     );

@@ -81,7 +81,9 @@ export default async function SettingsPage() {
           detail={
             hasLlm()
               ? "Powers natural-language search, spoiler-free recaps, watch-order advice and character arcs."
-              : "Set HF_TOKEN in .env.local to enable Ask the Watcher, recaps and character arcs. Everything else works without it."
+              : process.env.VERCEL
+                ? "Add HF_TOKEN in Vercel Environment Variables (Production and Preview), then redeploy. Everything else works without it."
+                : "Set HF_TOKEN in .env.local to enable Ask the Watcher, recaps and character arcs. Everything else works without it."
           }
           command="npm run check:llm"
         />

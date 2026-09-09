@@ -33,7 +33,11 @@ export default async function AskPage({ searchParams }: Search) {
         </p>
       </header>
 
-      <AskClient enabled={hasLlm()} initialQuery={query} />
+      <AskClient
+        enabled={hasLlm()}
+        initialQuery={query}
+        hosted={Boolean(process.env.VERCEL)}
+      />
     </div>
   );
 }
