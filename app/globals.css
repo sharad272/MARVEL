@@ -1,0 +1,284 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Theming contract
+ * ----------------
+ * Components never hard-code a hero colour. They read --c-primary /
+ * --c-secondary / --c-accent, which `themeVars()` writes onto a wrapper
+ * element from the character registry. Skinning a page as Loki or Wakanda
+ * is therefore a matter of changing one style attribute on an ancestor.
+ */
+:root {
+  --c-primary: #e62429;
+  --c-secondary: #c81a1f;
+  --c-accent: #ff4b50;
+  --c-primary-soft: rgba(230, 36, 41, 0.16);
+  --c-primary-glow: rgba(230, 36, 41, 0.45);
+  --c-secondary-soft: rgba(200, 26, 31, 0.16);
+
+  --surface: #08090c;
+  --surface-raised: #12141b;
+  --hairline: rgba(255, 255, 255, 0.08);
+}
+
+@layer base {
+  * {
+    border-color: var(--hairline);
+  }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--surface);
+    color: #e8eaf0;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  /* Comic-halftone grain over the whole page. Fixed so it reads as print
+     texture on the screen rather than something that scrolls with content. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 4px 4px;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* iOS zooms inputs under 16px. Keep fields readable on phones. */
+  @media (max-width: 640px) {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
+
+    body::before {
+      opacity: 0.22;
+      background-size: 6px 6px;
+    }
+
+    .panel {
+      backdrop-filter: none;
+    }
+  }
+
+  body:has(.watch-page) main {
+    padding-bottom: 0;
+  }
+
+  ::selection {
+    background: var(--c-primary);
+    color: #fff;
+  }
+
+  /* Scrollbars tinted to the active character. */
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0b0d12;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2a2e3a;
+    border-radius: 99px;
+    border: 3px solid #0b0d12;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--c-primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* --- Hero wallpaper stack --------------------------------------------
+     Movie backdrops are bright and busy, so text over them needs two
+     gradients: one vertical to anchor the copy, one horizontal to keep
+     the left column readable. Tinted with the character's colour so the
+     whole frame belongs to that hero. */
+  .hero-scrim {
+    background:
+      linear-gradient(to top, var(--surface) 4%, rgba(8, 9, 12, 0.72) 38%, transparent 78%),
+      linear-gradient(to right, rgba(8, 9, 12, 0.94) 0%, rgba(8, 9, 12, 0.55) 45%, transparent 80%);
+  }
+
+  .hero-tint {
+    background: radial-gradient(
+      120% 90% at 12% 88%,
+      var(--c-primary-soft) 0%,
+      transparent 62%
+    );
+  }
+
+  /* Character-coloured bloom behind cards and posters on hover. */
+  .glow-primary {
+    box-shadow:
+      0 0 0 1px var(--c-primary-soft),
+      0 12px 40px -12px var(--c-primary-glow);
+  }
+
+  /* --- Comic panel chrome ---------------------------------------------- */
+  .panel {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+    border: 1px solid var(--hairline);
+    backdrop-filter: blur(12px);
+  }
+
+  .panel-accent {
+    border-left: 3px solid var(--c-primary);
+  }
+
+  /* Kirby-crackle burst, used behind section headings and empty states. */
+  .crackle {
+    background-image:
+      radial-gradient(circle at 20% 30%, var(--c-primary-soft) 0, transparent 28%),
+      radial-gradient(circle at 78% 65%, var(--c-secondary-soft) 0, transparent 32%);
+  }
+
+  /* Diagonal comic speed-lines for section dividers. */
+  .speedlines {
+    background-image: repeating-linear-gradient(
+      -60deg,
+      var(--c-primary-soft) 0px,
+      var(--c-primary-soft) 1px,
+      transparent 1px,
+      transparent 9px
+    );
+  }
+
+  .title-stroke {
+    -webkit-text-stroke: 1px rgba(0, 0, 0, 0.55);
+    paint-order: stroke fill;
+  }
+
+  /* Horizontal rails: native scroll-snap beats a JS carousel here — it
+     keeps trackpad, touch and keyboard behaviour for free. */
+  .rail {
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+  .rail > * {
+    scroll-snap-align: start;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Multi-line clamps for overviews on cards. */
+  .clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .clamp-4 {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .page-shell {
+    padding-top: calc(4.25rem + env(safe-area-inset-top, 0px));
+  }
+  @media (min-width: 640px) {
+    .page-shell {
+      padding-top: 6rem;
+    }
+  }
+}
+
+/* --- Player ------------------------------------------------------------- */
+
+/* Hide the cursor over an idle player, the way YouTube and Netflix do. */
+@media (hover: hover) and (pointer: fine) {
+  .player-idle,
+  .player-idle * {
+    cursor: none !important;
+  }
+}
+
+/* The scrubber is a range input restyled rather than a div stack, so it
+   keeps keyboard and screen-reader semantics for free. */
+.scrubber {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--c-primary);
+  box-shadow: 0 0 0 4px var(--c-primary-soft);
+  transform: scale(0);
+  transition: transform 0.12s ease;
+}
+.scrubber:hover::-webkit-slider-thumb,
+.scrubber:focus-visible::-webkit-slider-thumb {
+  transform: scale(1);
+}
+@media (pointer: coarse) {
+  .scrubber::-webkit-slider-thumb {
+    transform: scale(1);
+  }
+}
+.scrubber::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: var(--c-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

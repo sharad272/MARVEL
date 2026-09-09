@@ -1,0 +1,35 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Secrets — never commit
+.env
+.env.local
+.env*.local
+
+# SQLite database + generated Prisma client
+prisma/*.db
+prisma/*.db-journal
+prisma/dev.db*
+
+# Local media-folder setting (written by Settings when SQLite isn't ready)
+.marvelverse.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Local Vercel project link
+.vercel
+

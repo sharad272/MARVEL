@@ -1,0 +1,18 @@
+{
+  "framework": "nextjs",
+  "build": {
+    "env": {
+      "DATABASE_URL": "file:./prisma/dev.db"
+    }
+  },
+  "env": {
+    "DATABASE_URL": "file:./prisma/dev.db"
+  },
+  "crons": [
+    {
+      "path": "/api/cron/refresh",
+      "schedule": "0 6 * * *"
+    }
+  ]
+}
+

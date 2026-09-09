@@ -1,0 +1,234 @@
+// MarvelVerse data model.
+//
+// SQLite does not support Prisma enums, so enum-like columns are plain
+// strings constrained by the typed constants in lib/constants.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Title {
+  id       String @id @default(cuid())
+  slug     String @unique
+  tmdbId   Int?
+  tmdbType String? // "movie" | "tv"
+
+  name     String
+  sortName String
+  overview String?
+  tagline  String?
+
+  mediaType String // "FILM" | "SERIES"
+  franchise String // "MCU" | "DEFENDERS" | "XMEN" | "SONY" | "ANIMATED" | "OTHER"
+  phase     Int? // MCU phase, null for non-MCU
+
+  /// Character slug whose palette skins this title's pages. Resolved
+  /// against lib/characters.ts, not a DB relation, because the palette is
+  /// a presentation concern that ships with the code.
+  themeSlug String?
+
+  releaseDate DateTime?
+  endDate     DateTime? // series finale
+  runtime     Int? // minutes; for series this is avg episode runtime
+
+  // Position in the in-universe timeline. Float so titles can be
+  // inserted between existing entries without renumbering.
+  chronoOrder Float?
+  // Human-readable in-universe setting, e.g. "2012" or "1943-1945".
+  chronoNote String?
+
+  posterPath   String?
+  backdropPath String?
+  logoPath     String?
+  voteAverage  Float?
+  homepage     String?
+
+  syncedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  episodes     Episode[]
+  videos       Video[]
+  availability Availability[]
+  localMedia   LocalMedia[]
+  progress     WatchProgress[]
+  library      LibraryEntry[]
+  appearances  Appearance[]
+
+  @@index([franchise, phase])
+  @@index([chronoOrder])
+  @@index([releaseDate])
+}
+
+model Episode {
+  id      String @id @default(cuid())
+  titleId String
+  title   Title  @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  tmdbId  Int?
+  season  Int
+  episode Int
+
+  name      String
+  overview  String?
+  airDate   DateTime?
+  runtime   Int?
+  stillPath String?
+
+  videos     Video[]
+  localMedia LocalMedia[]
+  progress   WatchProgress[]
+
+  @@unique([titleId, season, episode])
+  @@index([titleId])
+}
+
+/// Official trailers, teasers, clips and featurettes hosted on YouTube.
+/// These are the only remotely-hosted streams the player ever loads.
+model Video {
+  id      String  @id @default(cuid())
+  titleId String
+  title   Title   @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  episodeId String?
+  episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  youtubeKey  String
+  name        String
+  kind        String // "Trailer" | "Teaser" | "Clip" | "Featurette" | "Behind the Scenes"
+  official    Boolean  @default(true)
+  publishedAt DateTime?
+  size        Int? // max vertical resolution reported by TMDB
+
+  @@unique([titleId, youtubeKey])
+  @@index([titleId, kind])
+}
+
+/// Where a title can legally be watched, per region. Rows are upserted by
+/// the availability poller; `firstSeenAt` powers the "newly available" rail.
+model Availability {
+  id      String @id @default(cuid())
+  titleId String
+  title   Title  @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  region       String
+  providerId   Int
+  providerName String
+  logoPath     String?
+  kind         String // "FLATRATE" | "FREE" | "ADS" | "RENT" | "BUY"
+  link         String? // TMDB deep link into the provider
+
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  @@unique([titleId, region, providerId, kind])
+  @@index([region, firstSeenAt])
+}
+
+/// A media file on this machine that the user legally owns. Playback is
+/// served from disk by the app's own range-request route.
+model LocalMedia {
+  id      String  @id @default(cuid())
+  titleId String?
+  title   Title?  @relation(fields: [titleId], references: [id], onDelete: SetNull)
+  episodeId String?
+  episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: SetNull)
+
+  path        String  @unique
+  fileName    String
+  sizeBytes   BigInt
+  container   String
+  durationSec Float?
+
+  /// Confidence of the filename -> title match, 0..1. Low scores are
+  /// surfaced in the UI for manual correction.
+  matchScore Float?
+
+  addedAt DateTime @default(now())
+
+  @@index([titleId])
+}
+
+model WatchProgress {
+  id String @id @default(cuid())
+
+  titleId String
+  title   Title  @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  episodeId String?
+  episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  /// Set when the tracked playback was a YouTube video rather than a
+  /// title/episode, so trailers resume independently of the feature.
+  videoKey String?
+
+  positionSec Float
+  durationSec Float?
+  completed   Boolean @default(false)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([titleId, episodeId, videoKey])
+  @@index([updatedAt])
+}
+
+model LibraryEntry {
+  id      String @id @default(cuid())
+  titleId String
+  title   Title  @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  status   String // "WATCHLIST" | "WATCHING" | "WATCHED" | "DROPPED"
+  rating   Int? // 1..10
+  favorite Boolean @default(false)
+  note     String?
+
+  addedAt   DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([titleId])
+  @@index([status])
+}
+
+model Character {
+  id       String @id @default(cuid())
+  slug     String @unique
+  name     String
+  realName String?
+  bio      String?
+
+  appearances Appearance[]
+}
+
+/// Threads a character across every title they appear in, which is what
+/// makes "show me Wanda's arc in order" answerable.
+model Appearance {
+  id          String    @id @default(cuid())
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  titleId     String
+  title       Title     @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  actorName String?
+  role      String? // "LEAD" | "SUPPORTING" | "CAMEO"
+
+  @@unique([characterId, titleId])
+}
+
+/// Audit trail for the background workers.
+model SyncLog {
+  id        String   @id @default(cuid())
+  job       String // "catalog" | "availability" | "media-scan"
+  status    String // "OK" | "PARTIAL" | "FAILED"
+  message   String?
+  itemCount Int      @default(0)
+  startedAt DateTime @default(now())
+  finishedAt DateTime?
+}
+
+model AppSetting {
+  key   String @id
+  value String
+}
