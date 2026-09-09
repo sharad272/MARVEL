@@ -14,9 +14,11 @@ const nextConfig: NextConfig = {
     imageSizes: [64, 96, 128, 256, 384],
     minimumCacheTTL: 60 * 60 * 24,
   },
-  outputFileTracingIncludes: {
-    "/**": ["./prisma/dev.db"],
-  },
+  // Note: the seeded SQLite db is *not* shipped via outputFileTracingIncludes.
+  // That was tried and proved unreliable at actually landing the file in the
+  // deployed function; the db is instead embedded as a base64 string (a real
+  // JS import bundlers always include) — see lib/generated/db-blob.ts and
+  // lib/sqlite.ts.
 };
 
 export default nextConfig;

@@ -1,25 +1,31 @@
 import fs from "node:fs";
-import path from "node:path";
 import { DB_BASE64 } from "./generated/db-blob";
 
 /**
  * Prisma reads DATABASE_URL at client init. On Vercel the bundle's
  * filesystem is read-only, so this stages a writable copy into /tmp
- * before Prisma connects — first by copying the bundled file, in case
- * outputFileTracingIncludes picked it up, otherwise from an embedded
- * base64 snapshot that's guaranteed to be in the JS bundle (it's a real
+ * before Prisma connects, decoded straight from an embedded base64
+ * snapshot that's guaranteed to be in the JS bundle (it's a real
  * import, not a traced filesystem asset — see
- * scripts/generate-db-blob.mjs, which keeps it fresh).
+ * scripts/generate-db-blob.mjs, which keeps it fresh on every build).
+ *
+ * We intentionally don't try to locate/copy a "bundled" prisma/dev.db
+ * file directly: outputFileTracingIncludes proved unreliable at
+ * actually landing it in the deployed function, and separately,
+ * Prisma resolves a relative `file:` DATABASE_URL against
+ * prisma/schema.prisma's directory while a naive guess here would
+ * rebase it onto process.cwd() instead — those two disagree unless
+ * DATABASE_URL is exactly "file:./dev.db" everywhere. Both problems
+ * caused real production outages, so the embedded blob is the sole
+ * source of truth on serverless; there's nothing left to mismatch.
  */
 export function prepareSqliteUrl() {
-  const raw = process.env.DATABASE_URL?.trim() || "file:./prisma/dev.db";
+  const raw = process.env.DATABASE_URL?.trim() || "file:./dev.db";
   process.env.DATABASE_URL = raw;
 
   const serverless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
   if (!serverless) return;
 
-  const rel = raw.replace(/^file:(\/\/)?/, "");
-  const src = path.isAbsolute(rel) ? rel : path.join(process.cwd(), rel);
   const dest = "/tmp/marvelverse.db";
 
   try {
@@ -29,22 +35,15 @@ export function prepareSqliteUrl() {
       return;
     }
 
-    if (fs.existsSync(src)) {
-      fs.copyFileSync(src, dest);
-      process.env.DATABASE_URL = `file:${dest}`;
-      return;
-    }
-
     if (!DB_BASE64) {
       console.error(
-        `[sqlite] bundled db not found at "${src}" (cwd="${process.cwd()}") and no embedded snapshot is available`
+        "[sqlite] no embedded db snapshot available — lib/generated/db-blob.ts is empty (did scripts/generate-db-blob.mjs run?)"
       );
       return;
     }
 
     fs.writeFileSync(dest, Buffer.from(DB_BASE64, "base64"));
     process.env.DATABASE_URL = `file:${dest}`;
-    console.warn(`[sqlite] staged db from embedded snapshot (bundled file missing at "${src}")`);
   } catch (err) {
     console.error("[sqlite] failed to stage db into /tmp:", err);
   }

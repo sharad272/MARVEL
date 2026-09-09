@@ -4,7 +4,10 @@
  */
 import { spawnSync } from "node:child_process";
 
-process.env.DATABASE_URL ||= "file:./prisma/dev.db";
+// Must match prisma/schema.prisma's resolution (relative to prisma/, not
+// cwd) — see lib/sqlite.ts and scripts/generate-db-blob.mjs for why this
+// exact value matters.
+process.env.DATABASE_URL ||= "file:./dev.db";
 
 const steps = [
   ["npx", "prisma", "generate"],
