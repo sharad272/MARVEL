@@ -75,7 +75,9 @@ export const OFFICIAL_TRAILERS: Record<string, { key: string; name: string }> = 
   "deadpool": { key: "ONHBaC-pfsk", name: "Official Trailer" },
   "deadpool-2": { key: "D86RtevtfrA", name: "Official Trailer" },
   "logan": { key: "RH3OxVFvTeg", name: "Official Trailer" },
-  "x-men": { key: "lyuuzAtTcZ0", name: "Official Trailer" },
+  // x-men (2000): 20th Century Studios uploaded an X2 #TBT trailer but never
+  // the original film; Marvel Entertainment has nothing. Falls back to the
+  // comic-plate placeholder.
   "spider-man-2002": { key: "TYMMOjBUPMM", name: "Official Trailer" },
   "spider-man-2": { key: "3jBFwltrxJw", name: "Official Trailer" },
   "the-amazing-spider-man": { key: "upwf8RsyNqQ", name: "Official Trailer" },
@@ -111,16 +113,16 @@ export const OFFICIAL_TRAILERS: Record<string, { key: string; name: string }> = 
   "venom-the-last-dance": { key: "__2bjWbetsA", name: "Official Trailer" },
   "kraven-the-hunter": { key: "hR1-ihzff3I", name: "Official Trailer" },
   "blade": { key: "O2Y3FFFIvRI", name: "Official Trailer" },
-  "blade-ii": { key: "vAIBFzaxz4E", name: "Official Trailer" },
-  "daredevil-2003": { key: "2SUxOgQ0T9o", name: "Official Trailer" },
+  // blade-ii, daredevil-2003, elektra, fantastic-four-2005,
+  // fantastic-four-rise-of-the-silver-surfer, the-punisher-2004: no official
+  // studio trailer on YouTube. Checked Warner Bros / Warner Archive (New Line
+  // catalog), 20th Century Studios (US + India), Lionsgate Movies, and Marvel
+  // Entertainment — only third-party reuploads exist. Falls back to the
+  // comic-plate placeholder.
   // hulk-2003: no official trailer on Universal Pictures' YouTube channel
   // (only scene clips, verified via direct channel search) — only
   // third-party uploads exist. Falls back to the comic-plate placeholder.
   "blade-trinity": { key: "qcHEDGs7eAY", name: "Official Trailer" },
-  "the-punisher-2004": { key: "8R4odMHycN4", name: "Official Trailer" },
-  "fantastic-four-2005": { key: "QMrelVao8j0", name: "Official Trailer" },
-  "elektra": { key: "9rOoA5BFOYU", name: "Official Trailer" },
-  "fantastic-four-rise-of-the-silver-surfer": { key: "A5nUCoMA6IU", name: "Official Trailer" },
   "ghost-rider": { key: "nu6R7ypaz5g", name: "Official Trailer" },
   "fantastic-four-2015": { key: "AAgnQdiZFsQ", name: "Official Trailer" },
 };
