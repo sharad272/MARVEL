@@ -44,6 +44,12 @@ export function isSse(res: Response): boolean {
 
 export async function readLlmJson<T>(res: Response): Promise<T> {
   const json = (await res.json()) as T & { error?: string };
-  if (!res.ok) throw new Error(json.error ?? `Request failed (${res.status})`);
+  if (!res.ok) {
+    const fallback =
+      res.status === 429
+        ? "The Watcher is rate-limited right now. Wait a moment and try again."
+        : `Request failed (${res.status})`;
+    throw new Error(json.error ?? fallback);
+  }
   return json;
 }

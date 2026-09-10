@@ -7,6 +7,7 @@ import { WatcherLoader } from "@/components/watcher-loader";
 import { consumeSse } from "@/lib/llm/consume-sse";
 import { isSse, llmPost, readLlmJson } from "@/lib/llm/browser";
 import { useLlmEnabled } from "@/lib/llm/use-status";
+import { LlmNotice } from "@/components/llm-notice";
 import { TitleWatcherActions } from "@/components/title-watcher-actions";
 
 type Arc = {
@@ -92,19 +93,7 @@ export function CharacterArc({
   }
 
   if (error && !arc?.summary) {
-    return (
-      <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-4">
-        <p className="text-sm font-semibold text-amber-300">Couldn&rsquo;t generate the arc</p>
-        <p className="mt-1 text-[13px] leading-relaxed text-amber-200/70">{error}</p>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="mt-3 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-white/20"
-        >
-          Try again
-        </button>
-      </div>
-    );
+    return <LlmNotice error={error} onRetry={() => void load()} />;
   }
 
   if (!arc && !loading) {
@@ -194,7 +183,7 @@ export function CharacterArc({
                 <TitleWatcherActions
                   slug={b.slug}
                   name={b.name ?? b.slug}
-                  variant="compact"
+                  variant="links"
                   className="mt-2"
                 />
               </div>

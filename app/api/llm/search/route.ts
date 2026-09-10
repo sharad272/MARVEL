@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { nlSearch } from "@/lib/llm/features";
 import { getTitlesBySlugs } from "@/lib/queries";
-import { hasLlm, LlmUnavailableError } from "@/lib/llm/groq";
+import { hasLlm, llmJsonError } from "@/lib/llm/groq";
 
 export const dynamic = "force-dynamic";
 /** Reasoning models are not instant; give them room past the default. */
@@ -38,9 +38,7 @@ export async function POST(request: Request) {
     const titles = await getTitlesBySlugs(slugs);
     return NextResponse.json({ titles, reasoning });
   } catch (e) {
-    if (e instanceof LlmUnavailableError) {
-      return NextResponse.json({ error: e.message }, { status: 503 });
-    }
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    const { status, body } = llmJsonError(e);
+    return NextResponse.json(body, { status });
   }
 }

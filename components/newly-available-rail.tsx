@@ -109,7 +109,7 @@ export function NewlyAvailableRail({ rows, region }: { rows: Row[]; region: stri
                   </a>
                 )}
                 </div>
-                <TitleWatcherActions slug={title.slug} name={title.name} variant="compact" />
+                <TitleWatcherActions slug={title.slug} name={title.name} variant="links" />
               </div>
             </div>
           );

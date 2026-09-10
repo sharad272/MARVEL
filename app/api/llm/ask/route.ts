@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { runAsk, runAskStream } from "@/lib/llm/ask";
-import { hasLlm, LlmUnavailableError } from "@/lib/llm/groq";
+import { hasLlm, llmJsonError } from "@/lib/llm/groq";
 import { toSseResponse } from "@/lib/llm/sse";
 
 export const runtime = "nodejs";
@@ -56,9 +56,7 @@ export async function POST(request: Request) {
       headers: { "Cache-Control": "no-store, max-age=0" },
     });
   } catch (e) {
-    if (e instanceof LlmUnavailableError) {
-      return NextResponse.json({ error: e.message }, { status: 503 });
-    }
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    const { status, body } = llmJsonError(e);
+    return NextResponse.json(body, { status });
   }
 }

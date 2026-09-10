@@ -28,10 +28,33 @@ export type ChatOptions = {
 const MIN_COMPLETION_TOKENS = 512;
 
 export class LlmUnavailableError extends Error {
-  constructor(message: string) {
+  readonly code: "rate_limit" | "credits" | "auth" | "unavailable";
+  readonly retryAfterSec?: number;
+
+  constructor(
+    message: string,
+    code: "rate_limit" | "credits" | "auth" | "unavailable" = "unavailable",
+    retryAfterSec?: number
+  ) {
     super(message);
     this.name = "LlmUnavailableError";
+    this.code = code;
+    this.retryAfterSec = retryAfterSec;
   }
+}
+
+export function llmJsonError(e: unknown): {
+  status: number;
+  body: { error: string; code?: string; retryAfter?: number };
+} {
+  if (e instanceof LlmUnavailableError) {
+    const status = e.code === "rate_limit" ? 429 : e.code === "auth" ? 401 : 503;
+    return {
+      status,
+      body: { error: e.message, code: e.code, retryAfter: e.retryAfterSec },
+    };
+  }
+  return { status: 500, body: { error: (e as Error).message } };
 }
 
 type LlmConfig = {
@@ -59,6 +82,68 @@ export function llmProviderLabel(): string {
   } catch {
     return "LLM";
   }
+}
+
+function groqConfig(): LlmConfig | null {
+  const groq = runtimeEnv("GROQ_API_KEY");
+  if (!groq) return null;
+  return {
+    provider: "groq",
+    apiKey: groq,
+    baseUrl: (runtimeEnv("GROQ_BASE_URL") || "https://api.groq.com/openai/v1").replace(/\/$/, ""),
+    model: runtimeEnv("GROQ_MODEL") || runtimeEnv("LLM_MODEL") || "openai/gpt-oss-120b",
+  };
+}
+
+function parseRetryAfter(res: Response, text: string): number | undefined {
+  const header = res.headers.get("retry-after");
+  if (header) {
+    const secs = Number(header);
+    if (Number.isFinite(secs) && secs > 0) return Math.round(secs);
+    const when = Date.parse(header);
+    if (Number.isFinite(when)) return Math.max(1, Math.round((when - Date.now()) / 1000));
+  }
+  const match = text.match(/(\d+)\s*(?:seconds?|s)\b/i);
+  if (match) return Number(match[1]);
+  return undefined;
+}
+
+function waitPhrase(sec?: number): string {
+  if (!sec) return "Wait a moment and try again.";
+  if (sec < 60) return `Try again in about ${Math.max(5, sec)} seconds.`;
+  const min = Math.max(1, Math.round(sec / 60));
+  return `Try again in about ${min} minute${min === 1 ? "" : "s"}.`;
+}
+
+function isRateLimited(status: number, text: string): boolean {
+  if (status === 429) return true;
+  return /rate.?limit|too many requests|tpm_limit|rpm_limit|quota exceeded/i.test(text);
+}
+
+function throwProviderHttp(res: Response, text: string, provider: string): never {
+  if (res.status === 401) {
+    throw new LlmUnavailableError(
+      provider === "huggingface"
+        ? "Hugging Face rejected the API token."
+        : "Groq rejected the API key.",
+      "auth"
+    );
+  }
+  if (res.status === 402) {
+    throw new LlmUnavailableError(
+      "Hugging Face Inference credits are used up. Add credits at huggingface.co/settings/billing.",
+      "credits"
+    );
+  }
+  if (isRateLimited(res.status, text)) {
+    const wait = parseRetryAfter(res, text);
+    throw new LlmUnavailableError(
+      `The Watcher is rate-limited right now. ${waitPhrase(wait)}`,
+      "rate_limit",
+      wait
+    );
+  }
+  throw new Error(`${provider} ${res.status}: ${text.slice(0, 300)}`);
 }
 
 function readKey(): string {
@@ -179,40 +264,14 @@ async function complete(
       const text = await res.text().catch(() => "");
       lastError = `${res.status}: ${text.slice(0, 300)}`;
 
-      if (res.status === 401) {
-        throw new LlmUnavailableError(
-          cfg.provider === "huggingface"
-            ? "Hugging Face rejected the API token."
-            : "Groq rejected the API key."
-        );
-      }
-      if (res.status === 402) {
-        const groqFallback = runtimeEnv("GROQ_API_KEY");
-        if (allowFallback && cfg.provider === "huggingface" && groqFallback) {
-          return complete(
-            {
-              provider: "groq",
-              apiKey: groqFallback,
-              baseUrl: (runtimeEnv("GROQ_BASE_URL") || "https://api.groq.com/openai/v1").replace(
-                /\/$/,
-                ""
-              ),
-              model:
-                runtimeEnv("GROQ_MODEL") ||
-                runtimeEnv("LLM_MODEL") ||
-                "openai/gpt-oss-120b",
-            },
-            messages,
-            options,
-            false
-          );
-        }
-        throw new LlmUnavailableError(
-          "Hugging Face Inference credits are used up. Add credits at huggingface.co/settings/billing."
-        );
-      }
-      if (res.status === 429) {
-        throw new LlmUnavailableError("The model is rate-limited — try again shortly.");
+      const groq = groqConfig();
+      if (
+        allowFallback &&
+        cfg.provider === "huggingface" &&
+        groq &&
+        (res.status === 402 || isRateLimited(res.status, text))
+      ) {
+        return complete(groq, messages, options, false);
       }
 
       if ((res.status === 400 || res.status === 422) && (options.json || body.reasoning_effort)) {
@@ -239,7 +298,7 @@ async function complete(
       }
 
       if (res.status === 404 || res.status === 400) continue;
-      throw new Error(`${cfg.provider} ${lastError}`);
+      throwProviderHttp(res, text, cfg.provider);
     }
 
     return readChoice(await res.json());
@@ -292,44 +351,19 @@ async function* streamComplete(
       const text = await res.text().catch(() => "");
       lastError = `${res.status}: ${text.slice(0, 300)}`;
 
-      if (res.status === 401) {
-        throw new LlmUnavailableError(
-          cfg.provider === "huggingface"
-            ? "Hugging Face rejected the API token."
-            : "Groq rejected the API key."
-        );
+      const groq = groqConfig();
+      if (
+        allowFallback &&
+        cfg.provider === "huggingface" &&
+        groq &&
+        (res.status === 402 || isRateLimited(res.status, text))
+      ) {
+        yield* streamComplete(groq, messages, options, false);
+        return;
       }
-      if (res.status === 402) {
-        const groqFallback = runtimeEnv("GROQ_API_KEY");
-        if (allowFallback && cfg.provider === "huggingface" && groqFallback) {
-          yield* streamComplete(
-            {
-              provider: "groq",
-              apiKey: groqFallback,
-              baseUrl: (runtimeEnv("GROQ_BASE_URL") || "https://api.groq.com/openai/v1").replace(
-                /\/$/,
-                ""
-              ),
-              model:
-                runtimeEnv("GROQ_MODEL") ||
-                runtimeEnv("LLM_MODEL") ||
-                "openai/gpt-oss-120b",
-            },
-            messages,
-            options,
-            false
-          );
-          return;
-        }
-        throw new LlmUnavailableError(
-          "Hugging Face Inference credits are used up. Add credits at huggingface.co/settings/billing."
-        );
-      }
-      if (res.status === 429) {
-        throw new LlmUnavailableError("The model is rate-limited — try again shortly.");
-      }
+
       if (res.status === 404 || res.status === 400) continue;
-      throw new Error(`${cfg.provider} ${lastError}`);
+      throwProviderHttp(res, text, cfg.provider);
     }
 
     let yielded = false;

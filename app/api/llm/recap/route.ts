@@ -6,7 +6,7 @@ import {
   streamWatchPrereqs,
 } from "@/lib/llm/features";
 import { getTitlesBySlugs } from "@/lib/queries";
-import { hasLlm, LlmUnavailableError } from "@/lib/llm/groq";
+import { hasLlm, llmJsonError } from "@/lib/llm/groq";
 import { toSseResponse } from "@/lib/llm/sse";
 import type { LlmStreamEvent } from "@/lib/llm/events";
 
@@ -56,8 +56,8 @@ async function respondJson(slug: string) {
     ]);
     return json({ recap, explanation: prereqs.explanation, essential, helpful });
   } catch (e) {
-    if (e instanceof LlmUnavailableError) return json({ error: e.message }, 503);
-    return json({ error: (e as Error).message }, 500);
+    const { status, body } = llmJsonError(e);
+    return json(body, status);
   }
 }
 

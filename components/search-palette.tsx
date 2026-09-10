@@ -184,7 +184,7 @@ export function SearchPalette() {
                       </button>
                     </div>
                     <div className="px-3 pb-2">
-                      <TitleWatcherActions slug={t.slug} name={t.name} variant="compact" />
+                      <TitleWatcherActions slug={t.slug} name={t.name} variant="links" />
                     </div>
                   </li>
                 );

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Sparkles, CornerDownLeft, User, Play } from "lucide-react";
 import { ResultStrip } from "@/components/result-strip";
 import { TitleWatcherActions } from "@/components/title-watcher-actions";
+import { LlmNotice } from "@/components/llm-notice";
 import { WatcherLoader } from "@/components/watcher-loader";
 import type { TitleCard } from "@/lib/queries";
 import { consumeSse } from "@/lib/llm/consume-sse";
@@ -248,9 +249,7 @@ export function AskClient({
 
                 <div className="min-w-0 flex-1">
                   {turn.error ? (
-                    <p className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3.5 text-sm text-amber-200">
-                      {turn.error}
-                    </p>
+                    <LlmNotice error={turn.error} onRetry={() => void ask(turn.question)} />
                   ) : (
                     <AskAnswer turn={turn} />
                   )}
@@ -387,7 +386,7 @@ function AskAnswer({ turn }: { turn: Turn }) {
                 <TitleWatcherActions
                   slug={b.slug}
                   name={b.name ?? b.slug}
-                  variant="compact"
+                  variant="links"
                   className="mt-2"
                 />
               </div>

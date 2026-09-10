@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { Sparkles, ScrollText, ListChecks } from "lucide-react";
+import { LlmNotice } from "@/components/llm-notice";
 import { ResultStrip } from "@/components/result-strip";
 import { WatcherLoader } from "@/components/watcher-loader";
 import { consumeSse } from "@/lib/llm/consume-sse";
@@ -99,75 +99,45 @@ export function TitleInsights({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoStart, liveEnabled, slug]);
 
-  const askHref = `/ask?q=${encodeURIComponent(`What do I need to watch before ${name}?`)}`;
-
   if (!liveEnabled) {
     return (
-      <div id="insights" className="scroll-mt-[5.5rem] space-y-3 rounded-xl border border-white/10 bg-ink-850 p-4 sm:scroll-mt-28">
+      <div id="insights" className="scroll-mt-[5.5rem] rounded-xl border border-white/10 bg-ink-850 p-4 sm:scroll-mt-28">
         <p className="text-sm text-white/50">
-          Recaps and watch-order are unavailable right now. You can still ask in search.
+          Recaps are unavailable right now. Use Ask in the header to ask in plain English.
         </p>
-        <Link
-          href={askHref}
-          className="inline-flex min-h-11 items-center justify-center rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white hover:bg-white/20"
-        >
-          Ask about {name}
-        </Link>
       </div>
     );
   }
 
   if (!data && !loading && !error) {
     return (
-      <div
+      <button
+        type="button"
         id="insights"
-        className="speedlines scroll-mt-[5.5rem] flex w-full flex-col items-stretch gap-3 rounded-xl border border-white/10 bg-ink-850 p-4 sm:scroll-mt-28 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+        onClick={() => void load()}
+        aria-label={`Generate a briefing for ${name}`}
+        className="speedlines scroll-mt-[5.5rem] flex w-full items-center justify-between gap-4 rounded-xl border border-white/10 bg-ink-850 p-4 text-left transition-colors hover:border-[var(--c-primary)] sm:scroll-mt-28"
       >
-        <span className="flex items-start gap-3">
+        <span className="flex min-w-0 items-start gap-3">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary-grad text-white shadow-lg">
             <Sparkles className="h-4 w-4" />
           </span>
           <span>
-            <span className="block text-sm font-bold text-white">
-              Get me ready for {name}
-            </span>
+            <span className="block text-sm font-bold text-white">Get me ready for {name}</span>
             <span className="mt-0.5 block text-[13px] leading-relaxed text-white/50">
-              A spoiler-free recap of the story so far, plus what to watch first.
+              Spoiler-free recap and what to watch first.
             </span>
           </span>
         </span>
-        <span className="flex shrink-0 flex-col gap-2 self-stretch sm:flex-row sm:self-auto">
-          <button
-            type="button"
-            onClick={() => void load()}
-            aria-label={`Generate a briefing for ${name}`}
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-white px-4 py-2 text-[13px] font-bold text-black hover:scale-[1.02]"
-          >
-            Generate
-          </button>
-          <Link
-            href={askHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-white/10 px-4 py-2 text-[13px] font-bold text-white hover:bg-white/20"
-          >
-            Ask
-          </Link>
-        </span>
-      </div>
+        <span className="shrink-0 text-xs font-bold text-white/45">Generate</span>
+      </button>
     );
   }
 
   if (error && !data?.recap && !data?.explanation) {
     return (
-      <div id="insights" className="scroll-mt-[5.5rem] rounded-xl border border-amber-500/25 bg-amber-500/10 p-4 sm:scroll-mt-28">
-        <p className="text-sm font-semibold text-amber-300">Couldn&rsquo;t generate that</p>
-        <p className="mt-1 text-[13px] leading-relaxed text-amber-200/70">{error}</p>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="mt-3 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-white/20"
-        >
-          Try again
-        </button>
+      <div id="insights" className="scroll-mt-[5.5rem] sm:scroll-mt-28">
+        <LlmNotice error={error} onRetry={() => void load()} />
       </div>
     );
   }

@@ -42,7 +42,7 @@ export function ResultStrip({ titles }: { titles: TitleCard[] }) {
             >
               {t.name}
             </Link>
-            <TitleWatcherActions slug={t.slug} name={t.name} variant="compact" className="mt-1.5" />
+            <TitleWatcherActions slug={t.slug} name={t.name} variant="links" className="mt-1" />
           </div>
         );
       })}

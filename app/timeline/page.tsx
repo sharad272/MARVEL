@@ -123,7 +123,7 @@ export default async function TimelinePage() {
                   </Link>
                 </div>
                 <div className="relative px-3.5 pb-3.5">
-                  <TitleWatcherActions slug={t.slug} name={t.name} variant="compact" />
+                  <TitleWatcherActions slug={t.slug} name={t.name} variant="links" />
                 </div>
               </article>
             </li>

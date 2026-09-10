@@ -125,7 +125,7 @@ export function TitleCard({
           ) : null}
         </div>
       </Link>
-      <TitleWatcherActions slug={title.slug} name={title.name} variant="compact" className="mt-1.5" />
+      <TitleWatcherActions slug={title.slug} name={title.name} variant="links" className="mt-1.5" />
     </div>
   );
 }

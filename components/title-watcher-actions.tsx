@@ -10,12 +10,12 @@ export function titleGenerateHref(slug: string) {
   return `/title/${slug}?insights=1#insights`;
 }
 
-type Variant = "bar" | "compact" | "dock";
+type Variant = "bar" | "links";
 
 /**
- * Ask + Generate for a title. Same pair everywhere: title pages, cards,
- * rails, timeline, watch. Compact is for poster grids; dock is the
- * always-visible phone bar above the tab nav.
+ * One Ask + Generate pair per title surface.
+ * `bar` is the secondary hero cluster (ghost pills next to Play).
+ * `links` is the quiet row under cards, rails, and beats.
  */
 export function TitleWatcherActions({
   slug,
@@ -28,22 +28,45 @@ export function TitleWatcherActions({
   variant?: Variant;
   className?: string;
 }) {
-  const compact = variant === "compact";
-  const dock = variant === "dock";
-  const askClass = compact
-    ? "inline-flex min-h-9 items-center justify-center gap-1 rounded-full bg-white/10 px-2 text-[11px] font-bold text-white hover:bg-white/20"
-    : "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-white/10 px-3 text-sm font-bold text-white hover:bg-white/20";
-  const genClass = compact
-    ? "inline-flex min-h-9 items-center justify-center rounded-full bg-white px-2 text-[11px] font-bold text-black hover:bg-white/90"
-    : "inline-flex min-h-11 items-center justify-center rounded-full bg-white px-3 text-sm font-bold text-black hover:bg-white/90";
+  if (variant === "links") {
+    return (
+      <div className={cn("flex flex-wrap items-center gap-x-2 gap-y-0.5", className)}>
+        <Link
+          href={titleAskHref(name)}
+          className="inline-flex min-h-8 items-center gap-1 text-[12px] font-semibold text-white/55 hover:text-white"
+          aria-label={`Ask about ${name}`}
+        >
+          <Sparkles className="h-3 w-3" />
+          Ask
+        </Link>
+        <span className="text-white/20" aria-hidden>
+          ·
+        </span>
+        <Link
+          href={titleGenerateHref(slug)}
+          className="inline-flex min-h-8 items-center text-[12px] font-semibold text-white/55 hover:text-white"
+          aria-label={`Generate a briefing for ${name}`}
+        >
+          Generate
+        </Link>
+      </div>
+    );
+  }
+
+  const pill =
+    "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur hover:bg-white/20";
 
   return (
-    <div className={cn("grid grid-cols-2 gap-1.5 sm:gap-2", dock && "gap-2", className)}>
-      <Link href={titleAskHref(name)} className={askClass} aria-label={`Ask about ${name}`}>
-        <Sparkles className={compact ? "h-3 w-3" : "h-4 w-4"} />
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+      <Link href={titleAskHref(name)} className={pill} aria-label={`Ask about ${name}`}>
+        <Sparkles className="h-4 w-4" />
         Ask
       </Link>
-      <Link href={titleGenerateHref(slug)} className={genClass} aria-label={`Generate a briefing for ${name}`}>
+      <Link
+        href={titleGenerateHref(slug)}
+        className={pill}
+        aria-label={`Generate a briefing for ${name}`}
+      >
         Generate
       </Link>
     </div>

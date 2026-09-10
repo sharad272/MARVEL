@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, Sparkles, Loader2 } from "lucide-react";
 import { TitleCard } from "@/components/title-card";
+import { LlmNotice } from "@/components/llm-notice";
 import { WatcherLoader } from "@/components/watcher-loader";
 import { cn } from "@/lib/utils";
 import { useLlmEnabled } from "@/lib/llm/use-status";
@@ -86,7 +87,14 @@ export function SearchClient({
         body: JSON.stringify({ query: q, limit: 18 }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Search failed");
+      if (!res.ok) {
+        throw new Error(
+          json.error ??
+            (res.status === 429
+              ? "The Watcher is rate-limited right now. Wait a moment and try again."
+              : "Search failed")
+        );
+      }
       setResults(json.titles ?? []);
       setReasoning(json.reasoning ?? "");
     } catch (e) {
@@ -199,9 +207,9 @@ export function SearchClient({
       )}
 
       {error && (
-        <p className="mx-auto mt-8 max-w-lg rounded-lg border border-amber-500/25 bg-amber-500/10 p-3.5 text-center text-sm text-amber-200">
-          {error}
-        </p>
+        <div className="mx-auto mt-8 max-w-lg">
+          <LlmNotice error={error} onRetry={() => void runAi(query)} />
+        </div>
       )}
 
       {reasoning && (

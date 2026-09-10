@@ -193,14 +193,15 @@ export function HeroBillboard({
                 <Play className="h-4 w-4 fill-current" />
                 Play
               </Link>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <Link
                   href={`/title/${current.slug}`}
-                  className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/20 sm:flex-none sm:py-3"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/20"
                 >
                   <Info className="h-4 w-4" />
                   More info
                 </Link>
+                <TitleWatcherActions slug={current.slug} name={current.name} />
                 <WatchlistIconButton
                   key={current.id}
                   titleId={current.id}
@@ -215,7 +216,6 @@ export function HeroBillboard({
                   }}
                 />
               </div>
-              <TitleWatcherActions slug={current.slug} name={current.name} className="w-full sm:max-w-xs" />
             </div>
           </div>
 
