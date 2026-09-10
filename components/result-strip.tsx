@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Play } from "lucide-react";
 import { CoverArt } from "@/components/cover-art";
+import { TitleWatcherActions } from "@/components/title-watcher-actions";
 import { officialTrailer } from "@/lib/videos";
 import type { TitleCard } from "@/lib/queries";
 
@@ -41,6 +42,7 @@ export function ResultStrip({ titles }: { titles: TitleCard[] }) {
             >
               {t.name}
             </Link>
+            <TitleWatcherActions slug={t.slug} name={t.name} variant="compact" className="mt-1.5" />
           </div>
         );
       })}

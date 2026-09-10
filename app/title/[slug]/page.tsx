@@ -10,7 +10,6 @@ import {
   Layers,
   ExternalLink,
   HardDrive,
-  Sparkles,
 } from "lucide-react";
 import { getTitleBySlug, pickFeaturedVideo } from "@/lib/queries";
 import { getCharacter, themeVars } from "@/lib/characters";
@@ -27,6 +26,8 @@ import { formatDate, formatRuntime, formatYear } from "@/lib/utils";
 import { LibraryButtons } from "@/components/library-buttons";
 import { EpisodeList } from "@/components/episode-list";
 import { TitleInsights } from "@/components/title-insights";
+import { TitleWatcherActions } from "@/components/title-watcher-actions";
+import { TitleWatcherDock } from "@/components/title-watcher-dock";
 import { AttachLocal } from "@/components/attach-local";
 import { LicensedWatch } from "@/components/licensed-watch";
 import { withOfficialVideos } from "@/lib/videos";
@@ -77,7 +78,7 @@ export default async function TitlePage({ params, searchParams }: PageProps) {
   return (
     <div style={themeVars(theme)}>
       {/* --- Wallpaper header ------------------------------------------- */}
-      <div className="relative min-h-[min(88svh,620px)] w-full sm:min-h-[68vh]">
+      <div className="relative min-h-0 w-full sm:min-h-[68vh]">
         <div className="absolute inset-0 overflow-hidden">
         <CoverArt
           alt=""
@@ -93,7 +94,7 @@ export default async function TitlePage({ params, searchParams }: PageProps) {
         <div className="hero-tint absolute inset-0" />
         </div>
 
-        <div className="relative mx-auto flex min-h-[min(88svh,620px)] max-w-[1500px] items-end px-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] pt-[calc(5.5rem+env(safe-area-inset-top))] sm:min-h-[68vh] sm:px-6 sm:pb-10 sm:pt-28 lg:px-10">
+        <div className="relative mx-auto flex min-h-0 max-w-[1500px] items-end px-4 pb-6 pt-[calc(5.5rem+env(safe-area-inset-top))] sm:min-h-[68vh] sm:px-6 sm:pb-10 sm:pt-28 lg:px-10">
           <div className="flex w-full items-end gap-4 sm:gap-8">
             <div className="relative aspect-[2/3] w-[112px] shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/15 sm:w-[210px]">
               <CoverArt
@@ -181,7 +182,7 @@ export default async function TitlePage({ params, searchParams }: PageProps) {
               </div>
 
               {title.overview && (
-                <p className="mb-6 max-w-2xl text-pretty leading-relaxed text-white/80 max-sm:clamp-3 sm:mb-7">
+                <p className="mb-5 max-w-2xl text-pretty leading-relaxed text-white/80 max-sm:clamp-2 sm:mb-7">
                   {title.overview}
                 </p>
               )}
@@ -202,21 +203,11 @@ export default async function TitlePage({ params, searchParams }: PageProps) {
                     Trailer
                   </Link>
                 )}
-                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-                  <Link
-                    href={`/ask?q=${encodeURIComponent(`What do I need to watch before ${title.name}?`)}`}
-                    className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/20"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Ask
-                  </Link>
-                  <Link
-                    href="?insights=1#insights"
-                    className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/20"
-                  >
-                    Generate
-                  </Link>
-                </div>
+                <TitleWatcherActions
+                  slug={title.slug}
+                  name={title.name}
+                  className="w-full sm:min-w-[220px] sm:w-[240px]"
+                />
                 <LibraryButtons
                   titleId={title.id}
                   initialStatus={libraryEntry?.status ?? null}
@@ -236,7 +227,7 @@ export default async function TitlePage({ params, searchParams }: PageProps) {
       </div>
 
       {/* --- Body -------------------------------------------------------- */}
-      <div className="mx-auto max-w-[1500px] px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:px-10">
+      <div className="mx-auto max-w-[1500px] px-4 py-10 pb-[calc(9rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:px-10">
         <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
           <div className="min-w-0 space-y-12">
             <TitleInsights
@@ -346,6 +337,8 @@ export default async function TitlePage({ params, searchParams }: PageProps) {
           </aside>
         </div>
       </div>
+
+      <TitleWatcherDock slug={title.slug} name={title.name} />
     </div>
   );
 }

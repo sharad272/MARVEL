@@ -10,6 +10,8 @@ import { MIN_RESUME_SECONDS } from "@/lib/constants";
 import { AttachLocal } from "@/components/attach-local";
 import { LicensedWatch } from "@/components/licensed-watch";
 import { withOfficialVideos } from "@/lib/videos";
+import { TitleWatcherActions } from "@/components/title-watcher-actions";
+import { TitleWatcherDock } from "@/components/title-watcher-dock";
 
 export const dynamic = "force-dynamic";
 
@@ -90,7 +92,7 @@ export default async function WatchPage({ params, searchParams }: Params & Searc
 
   return (
     <div style={themeVars(theme)} className="watch-page min-h-dvh bg-ink-950">
-      <div className="mx-auto max-w-[1500px] px-0 pb-16 sm:px-4 lg:px-8">
+      <div className="mx-auto max-w-[1500px] px-0 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-4 sm:pb-16 lg:px-8">
         <div className="flex items-center gap-3 px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))] sm:px-0 sm:py-4">
           <Link
             href={`/title/${title.slug}`}
@@ -146,6 +148,8 @@ export default async function WatchPage({ params, searchParams }: Params & Searc
               </p>
             )}
 
+            <TitleWatcherActions slug={title.slug} name={title.name} className="mt-5 max-w-md" />
+
             {localFile ? (
               <p className="mt-5 flex items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2.5 text-sm text-emerald-300">
                 <HardDrive className="h-4 w-4 shrink-0" />
@@ -185,6 +189,7 @@ export default async function WatchPage({ params, searchParams }: Params & Searc
           </aside>
         </div>
       </div>
+      <TitleWatcherDock slug={title.slug} name={title.name} aboveTabBar={false} />
     </div>
   );
 }

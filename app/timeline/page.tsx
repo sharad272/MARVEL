@@ -7,6 +7,7 @@ import { ArtFallback } from "@/components/art-fallback";
 import { backdropUrl, posterUrl } from "@/lib/tmdb/images";
 import { formatRuntime, formatYear } from "@/lib/utils";
 import { FRANCHISE } from "@/lib/constants";
+import { TitleWatcherActions } from "@/components/title-watcher-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export default async function TimelinePage() {
   const placed = titles.filter((t) => t.chronoNote);
 
   return (
-    <div className="page-shell mx-auto max-w-[1100px] px-4 pb-20 sm:px-6">
+    <div className="page-shell mx-auto max-w-[1100px] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-20">
       <header className="mb-12 max-w-2xl">
         <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-marvel-400">
           In-universe chronology
@@ -120,6 +121,9 @@ export default async function TimelinePage() {
                       <Play className="ml-0.5 h-4 w-4 fill-current" />
                     </span>
                   </Link>
+                </div>
+                <div className="relative px-3.5 pb-3.5">
+                  <TitleWatcherActions slug={t.slug} name={t.name} variant="compact" />
                 </div>
               </article>
             </li>

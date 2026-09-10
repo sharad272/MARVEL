@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Sparkles, CornerDownLeft, User, Play } from "lucide-react";
 import { ResultStrip } from "@/components/result-strip";
+import { TitleWatcherActions } from "@/components/title-watcher-actions";
 import { WatcherLoader } from "@/components/watcher-loader";
 import type { TitleCard } from "@/lib/queries";
 import { consumeSse } from "@/lib/llm/consume-sse";
@@ -383,6 +384,12 @@ function AskAnswer({ turn }: { turn: Turn }) {
                   </Link>
                 </div>
                 <p className="mt-0.5 text-[14px] leading-relaxed text-white/75">{b.beat}</p>
+                <TitleWatcherActions
+                  slug={b.slug}
+                  name={b.name ?? b.slug}
+                  variant="compact"
+                  className="mt-2"
+                />
               </div>
             </li>
           ))}

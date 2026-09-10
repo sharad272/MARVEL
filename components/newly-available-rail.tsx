@@ -5,6 +5,7 @@ import { getCharacter, themeVars } from "@/lib/characters";
 import { ArtFallback } from "@/components/art-fallback";
 import { backdropUrl, posterUrl, providerLogoUrl } from "@/lib/tmdb/images";
 import { formatRelative } from "@/lib/utils";
+import { TitleWatcherActions } from "@/components/title-watcher-actions";
 import type { TitleCard } from "@/lib/queries";
 
 type Row = {
@@ -79,7 +80,8 @@ export function NewlyAvailableRail({ rows, region }: { rows: Row[]; region: stri
                 </div>
               </Link>
 
-              <div className="flex items-center justify-between gap-2 border-t border-white/[0.07] p-3">
+              <div className="flex flex-col gap-2 border-t border-white/[0.07] p-3">
+                <div className="flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
                   {providerLogoUrl(logoPath) && (
                     <Image
@@ -106,6 +108,8 @@ export function NewlyAvailableRail({ rows, region }: { rows: Row[]; region: stri
                     <ExternalLink className="h-3 w-3" />
                   </a>
                 )}
+                </div>
+                <TitleWatcherActions slug={title.slug} name={title.name} variant="compact" />
               </div>
             </div>
           );

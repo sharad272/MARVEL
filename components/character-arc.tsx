@@ -7,6 +7,7 @@ import { WatcherLoader } from "@/components/watcher-loader";
 import { consumeSse } from "@/lib/llm/consume-sse";
 import { isSse, llmPost, readLlmJson } from "@/lib/llm/browser";
 import { useLlmEnabled } from "@/lib/llm/use-status";
+import { TitleWatcherActions } from "@/components/title-watcher-actions";
 
 type Arc = {
   summary: string;
@@ -190,6 +191,12 @@ export function CharacterArc({
                   </Link>
                 </div>
                 <p className="mt-0.5 text-[14px] leading-relaxed text-white/75">{b.beat}</p>
+                <TitleWatcherActions
+                  slug={b.slug}
+                  name={b.name ?? b.slug}
+                  variant="compact"
+                  className="mt-2"
+                />
               </div>
             </li>
           ))}

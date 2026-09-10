@@ -11,6 +11,7 @@ import { logoUrl } from "@/lib/tmdb/images";
 import { officialTrailer } from "@/lib/videos";
 import { cn, formatRuntime, formatYear } from "@/lib/utils";
 import type { TitleCard } from "@/lib/queries";
+import { TitleWatcherActions } from "@/components/title-watcher-actions";
 
 type HeroTitle = TitleCard & { logoPath?: string | null; overview?: string | null };
 
@@ -214,6 +215,7 @@ export function HeroBillboard({
                   }}
                 />
               </div>
+              <TitleWatcherActions slug={current.slug} name={current.name} className="w-full sm:max-w-xs" />
             </div>
           </div>
 

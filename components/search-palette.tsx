@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Search, Sparkles, Play, X } from "lucide-react";
 import { posterUrl, youtubeThumb } from "@/lib/tmdb/images";
 import { officialTrailer } from "@/lib/videos";
+import { TitleWatcherActions } from "@/components/title-watcher-actions";
 import type { TitleCard } from "@/lib/queries";
 
 export function SearchPalette() {
@@ -181,6 +182,9 @@ export function SearchPalette() {
                         <Play className="h-3 w-3 fill-current" />
                         Play
                       </button>
+                    </div>
+                    <div className="px-3 pb-2">
+                      <TitleWatcherActions slug={t.slug} name={t.name} variant="compact" />
                     </div>
                   </li>
                 );
