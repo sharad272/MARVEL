@@ -8,6 +8,7 @@ import {
 import { getTitlesBySlugs } from "@/lib/queries";
 import { hasLlm, llmJsonError } from "@/lib/llm/groq";
 import { toSseResponse } from "@/lib/llm/sse";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import type { LlmStreamEvent } from "@/lib/llm/events";
 
 export const runtime = "nodejs";
@@ -62,6 +63,8 @@ async function respondJson(slug: string) {
 }
 
 export async function GET(request: Request) {
+  const limited = enforceRateLimit(request, "llm");
+  if (limited) return limited;
   const slug = new URL(request.url).searchParams.get("slug")?.trim() ?? "";
   if (!slug) return json({ error: "slug is required" }, 400);
   if (request.headers.get("accept")?.includes("text/event-stream")) {
@@ -72,6 +75,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, "llm");
+  if (limited) return limited;
   let slug = "";
   let stream = true;
   try {

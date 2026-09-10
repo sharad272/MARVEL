@@ -72,8 +72,16 @@ export function Player({
 
   const onSurfaceClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.detail > 1) return; // handled by dblclick
+    // iOS only counts play() as a user gesture if it runs synchronously.
+    // Queue a delayed toggle only while already playing, so a double-tap
+    // can still seek instead of pausing.
+    if (state.status === "loading" || state.status === "idle") return;
+    if (state.status !== "playing") {
+      void actions.play();
+      return;
+    }
     if (tapTimer.current) clearTimeout(tapTimer.current);
-    tapTimer.current = setTimeout(() => actions.togglePlay(), 200);
+    tapTimer.current = setTimeout(() => actions.pause(), 200);
   };
 
   const onSurfaceDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -203,6 +211,16 @@ export function Player({
             <p className="mt-1.5 text-sm leading-relaxed text-white/60">
               {state.error ?? "Something went wrong."}
             </p>
+            {source.kind === "youtube" && (
+              <a
+                href={`https://www.youtube.com/watch?v=${source.src}`}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-white px-4 text-sm font-bold text-black"
+              >
+                Watch on YouTube
+              </a>
+            )}
           </div>
         </div>
       )}

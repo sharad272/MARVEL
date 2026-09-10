@@ -1,4 +1,3 @@
-import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCharacterWithAppearances } from "@/lib/queries";
@@ -8,9 +7,7 @@ import { TitleCard } from "@/components/title-card";
 import { CharacterArc } from "@/components/character-arc";
 import { hasLlm } from "@/lib/llm/groq";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const maxDuration = 90;
+export const revalidate = 3600;
 
 type Params = { params: Promise<{ slug: string }> };
 type PageProps = Params & { searchParams: Promise<{ arc?: string }> };
@@ -22,7 +19,6 @@ export async function generateMetadata({ params }: Params) {
 }
 
 export default async function CharacterPage({ params, searchParams }: PageProps) {
-  await connection();
   const { slug } = await params;
   const { arc: arcFlag } = await searchParams;
   const character = await getCharacterWithAppearances(slug);

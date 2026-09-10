@@ -3,6 +3,7 @@ import { z } from "zod";
 import { runAsk, runAskStream } from "@/lib/llm/ask";
 import { hasLlm, llmJsonError } from "@/lib/llm/groq";
 import { toSseResponse } from "@/lib/llm/sse";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +23,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, "llm");
+  if (limited) return limited;
+
   if (!hasLlm()) {
     return NextResponse.json(
       { error: "No LLM API key configured. Instant search still works." },

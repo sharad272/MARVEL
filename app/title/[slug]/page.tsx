@@ -11,7 +11,7 @@ import {
   ExternalLink,
   HardDrive,
 } from "lucide-react";
-import { getTitleBySlug, pickFeaturedVideo } from "@/lib/queries";
+import { getTitleMeta, getTitleBySlug, pickFeaturedVideo } from "@/lib/queries";
 import { getCharacter, themeVars } from "@/lib/characters";
 import { CoverArt } from "@/components/cover-art";
 import { logoUrl, providerLogoUrl, youtubeThumb } from "@/lib/tmdb/images";
@@ -29,18 +29,17 @@ import { TitleInsights } from "@/components/title-insights";
 import { TitleWatcherActions } from "@/components/title-watcher-actions";
 import { AttachLocal } from "@/components/attach-local";
 import { LicensedWatch } from "@/components/licensed-watch";
-import { withOfficialVideos } from "@/lib/videos";
+import { officialTrailer, withOfficialVideos } from "@/lib/videos";
 import { hasLlm } from "@/lib/llm/groq";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 type Params = { params: Promise<{ slug: string }> };
 type PageProps = Params & { searchParams: Promise<{ insights?: string }> };
 
 export async function generateMetadata({ params }: Params) {
   const { slug } = await params;
-  const title = await getTitleBySlug(slug);
+  const title = await getTitleMeta(slug);
   if (!title) return { title: "Not found" };
   return {
     title: title.name,
@@ -57,7 +56,10 @@ export default async function TitlePage({ params, searchParams }: PageProps) {
 
   const theme = getCharacter(title.themeSlug);
   const videos = withOfficialVideos(title.slug, title.videos);
-  const featured = pickFeaturedVideo(videos);
+  const curated = officialTrailer(title.slug);
+  const featured =
+    (curated ? videos.find((vid) => vid.youtubeKey === curated.key) ?? null : null) ??
+    pickFeaturedVideo(videos);
   const region = process.env.WATCH_REGION?.trim() || "US";
   const franchise = FRANCHISE_META[title.franchise as Franchise];
 

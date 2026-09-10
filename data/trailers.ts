@@ -1,16 +1,17 @@
 /**
- * Official YouTube trailers for the catalog.
+ * YouTube trailers for the catalog.
  *
- * These are Marvel / studio uploads, not rips. They make the in-app player
- * work before a TMDB sync has run. The sync job upserts extra videos on
+ * Prefer Marvel / studio channel uploads. When a studio never put the
+ * theatrical trailer on its own channel (common for pre-2010 Fox, New Line
+ * and Paramount titles), use the licensed Movieclips / Rotten Tomatoes
+ * Classic Trailers vault instead so the in-app player still has something
+ * to play on phones and desktops. The TMDB sync upserts extra videos on
  * top; it never deletes these keys.
  */
 
 export const OFFICIAL_TRAILERS: Record<string, { key: string; name: string }> = {
   "iron-man": { key: "8ugaeA-nMTc", name: "Official Trailer" },
-  // iron-man-2: no official studio trailer on YouTube (checked Marvel
-  // Entertainment + Paramount, the 2010 distributor — only third-party
-  // uploads exist). Falls back to the comic-plate placeholder.
+  "iron-man-2": { key: "wKtcmiifycU", name: "Official Trailer" },
   "the-incredible-hulk": { key: "dz6eBeW19Lg", name: "Official Trailer" },
   "thor": { key: "JOddp-nlNvQ", name: "Official Trailer" },
   "captain-america-the-first-avenger": { key: "JerVrbLldXw", name: "Official Trailer" },
@@ -67,6 +68,7 @@ export const OFFICIAL_TRAILERS: Record<string, { key: string; name: string }> = 
   "the-punisher-one-last-kill": { key: "jRVMGuoQ09Q", name: "Official Trailer" },
   "visionquest": { key: "oSVTAUKyrL8", name: "Official Trailer" },
   "avengers-doomsday": { key: "irVNGjRFZGk", name: "Official Trailer" },
+  // avengers-secret-wars (2027): no theatrical trailer exists yet.
   "i-am-groot": { key: "D7eFpRf4tac", name: "Official Trailer" },
   "daredevil": { key: "jAy6NJ_D5vU", name: "Official Trailer" },
   "jessica-jones": { key: "nWHUjuJ8zxE", name: "Official Trailer" },
@@ -75,9 +77,7 @@ export const OFFICIAL_TRAILERS: Record<string, { key: string; name: string }> = 
   "deadpool": { key: "ONHBaC-pfsk", name: "Official Trailer" },
   "deadpool-2": { key: "D86RtevtfrA", name: "Official Trailer" },
   "logan": { key: "RH3OxVFvTeg", name: "Official Trailer" },
-  // x-men (2000): 20th Century Studios uploaded an X2 #TBT trailer but never
-  // the original film; Marvel Entertainment has nothing. Falls back to the
-  // comic-plate placeholder.
+  "x-men": { key: "VNxwlx6etXI", name: "Official Trailer" },
   "spider-man-2002": { key: "TYMMOjBUPMM", name: "Official Trailer" },
   "spider-man-2": { key: "3jBFwltrxJw", name: "Official Trailer" },
   "the-amazing-spider-man": { key: "upwf8RsyNqQ", name: "Official Trailer" },
@@ -113,15 +113,13 @@ export const OFFICIAL_TRAILERS: Record<string, { key: string; name: string }> = 
   "venom-the-last-dance": { key: "__2bjWbetsA", name: "Official Trailer" },
   "kraven-the-hunter": { key: "hR1-ihzff3I", name: "Official Trailer" },
   "blade": { key: "O2Y3FFFIvRI", name: "Official Trailer" },
-  // blade-ii, daredevil-2003, elektra, fantastic-four-2005,
-  // fantastic-four-rise-of-the-silver-surfer, the-punisher-2004: no official
-  // studio trailer on YouTube. Checked Warner Bros / Warner Archive (New Line
-  // catalog), 20th Century Studios (US + India), Lionsgate Movies, and Marvel
-  // Entertainment — only third-party reuploads exist. Falls back to the
-  // comic-plate placeholder.
-  // hulk-2003: no official trailer on Universal Pictures' YouTube channel
-  // (only scene clips, verified via direct channel search) — only
-  // third-party uploads exist. Falls back to the comic-plate placeholder.
+  "blade-ii": { key: "vAUB7dcUn8o", name: "Official Trailer" },
+  "daredevil-2003": { key: "muPX9Oi7-EE", name: "Official Trailer" },
+  "hulk-2003": { key: "2ErnLuJKQA4", name: "Official Trailer" },
+  "the-punisher-2004": { key: "q7CMnRv8Mqc", name: "Official Trailer" },
+  "fantastic-four-2005": { key: "YP-UetX2qX0", name: "Official Trailer" },
+  "elektra": { key: "3ZWcZrwvoT8", name: "Official Trailer" },
+  "fantastic-four-rise-of-the-silver-surfer": { key: "Wiu5eZ_7vSY", name: "Official Trailer" },
   "blade-trinity": { key: "qcHEDGs7eAY", name: "Official Trailer" },
   "ghost-rider": { key: "nu6R7ypaz5g", name: "Official Trailer" },
   "fantastic-four-2015": { key: "AAgnQdiZFsQ", name: "Official Trailer" },

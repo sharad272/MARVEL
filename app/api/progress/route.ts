@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { COMPLETION_THRESHOLD } from "@/lib/constants";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   titleId: z.string().min(1),
@@ -12,6 +13,8 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, "write");
+  if (limited) return limited;
   // The player sends this via sendBeacon on page teardown, which posts a
   // Blob — so parse defensively rather than trusting the content type.
   let payload: unknown;

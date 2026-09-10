@@ -2,14 +2,14 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink, HardDrive } from "lucide-react";
 import { WatchScreen } from "@/components/watch-screen";
-import { getTitleBySlug, pickFeaturedVideo } from "@/lib/queries";
+import { getTitleMeta, getTitleBySlug, pickFeaturedVideo } from "@/lib/queries";
 import { getCharacter, themeVars } from "@/lib/characters";
 import { AVAILABILITY_LABEL, type AvailabilityKind } from "@/lib/constants";
 import { providerLogoUrl, backdropUrl, youtubeThumb } from "@/lib/tmdb/images";
 import { MIN_RESUME_SECONDS } from "@/lib/constants";
 import { AttachLocal } from "@/components/attach-local";
 import { LicensedWatch } from "@/components/licensed-watch";
-import { withOfficialVideos } from "@/lib/videos";
+import { officialTrailer, withOfficialVideos } from "@/lib/videos";
 import { TitleWatcherActions } from "@/components/title-watcher-actions";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ type Search = { searchParams: Promise<{ v?: string; s?: string; e?: string; src?
 
 export async function generateMetadata({ params }: Params) {
   const { slug } = await params;
-  const title = await getTitleBySlug(slug);
+  const title = await getTitleMeta(slug);
   return { title: title ? `Watch ${title.name}` : "Watch" };
 }
 
@@ -40,7 +40,11 @@ export default async function WatchPage({ params, searchParams }: Params & Searc
       : null;
 
   const requested = v ? videos.find((vid) => vid.youtubeKey === v) : null;
-  const featured = requested ?? pickFeaturedVideo(videos);
+  const curated = officialTrailer(title.slug);
+  const featured =
+    requested ??
+    (curated ? videos.find((vid) => vid.youtubeKey === curated.key) ?? null : null) ??
+    pickFeaturedVideo(videos);
 
   // A local file is the full movie. `?v=` or `?src=trailer` opts into the
   // official trailer instead, so both remain reachable from one page.
@@ -120,9 +124,10 @@ export default async function WatchPage({ params, searchParams }: Params & Searc
         ) : (
           <div className="grid aspect-video w-full place-items-center bg-ink-900 px-6 sm:rounded-xl">
             <div className="w-full max-w-lg text-center">
-              <p className="mb-1 font-semibold text-white">No official trailer on file</p>
+              <p className="mb-1 font-semibold text-white">Trailer not on YouTube yet</p>
               <p className="text-sm leading-relaxed text-white/50">
-                Use the licensed services on the right to watch the full title.
+                This title hasn&rsquo;t published a trailer. Use the licensed
+                services on the right when the full title is available.
               </p>
             </div>
           </div>

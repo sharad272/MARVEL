@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { maybeRefreshCatalog } from "@/lib/catalog/refresh";
+import { CATALOG_TAG } from "@/lib/catalog-cache";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -16,5 +18,6 @@ export async function GET(request: Request) {
   }
 
   const result = await maybeRefreshCatalog(true);
+  if (!result.skipped) revalidateTag(CATALOG_TAG);
   return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
 }

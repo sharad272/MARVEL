@@ -13,7 +13,7 @@ type Search = { searchParams: Promise<{ q?: string }> };
 export default async function SearchPage({ searchParams }: Search) {
   await connection();
   const { q } = await searchParams;
-  const initial = q ? await searchTitles(q, 30) : [];
+  const initial = q ? await searchTitles(q, 30, { deep: true }) : [];
 
   return (
     <div className="page-shell mx-auto max-w-[1600px] px-4 pb-16 sm:px-6 lg:px-10">

@@ -21,7 +21,7 @@ import { DB_BASE64 } from "./generated/db-blob";
  */
 export function prepareSqliteUrl() {
   const raw = process.env.DATABASE_URL?.trim() || "file:./dev.db";
-  process.env.DATABASE_URL = raw;
+  process.env.DATABASE_URL = withSqliteParams(raw);
 
   const serverless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
   if (!serverless) return;
@@ -31,7 +31,7 @@ export function prepareSqliteUrl() {
   try {
     if (fs.existsSync(dest)) {
       // Already staged by an earlier request on this warm instance.
-      process.env.DATABASE_URL = `file:${dest}`;
+      process.env.DATABASE_URL = withSqliteParams(`file:${dest}`);
       return;
     }
 
@@ -43,8 +43,14 @@ export function prepareSqliteUrl() {
     }
 
     fs.writeFileSync(dest, Buffer.from(DB_BASE64, "base64"));
-    process.env.DATABASE_URL = `file:${dest}`;
+    process.env.DATABASE_URL = withSqliteParams(`file:${dest}`);
   } catch (err) {
     console.error("[sqlite] failed to stage db into /tmp:", err);
   }
+}
+
+/** Prisma's SQLite driver is not a pool — one connection per client. */
+function withSqliteParams(url: string): string {
+  if (url.includes("connection_limit=")) return url;
+  return url.includes("?") ? `${url}&connection_limit=1` : `${url}?connection_limit=1`;
 }

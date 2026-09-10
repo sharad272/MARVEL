@@ -3,6 +3,7 @@ import { z } from "zod";
 import { nlSearch } from "@/lib/llm/features";
 import { getTitlesBySlugs } from "@/lib/queries";
 import { hasLlm, llmJsonError } from "@/lib/llm/groq";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 /** Reasoning models are not instant; give them room past the default. */
@@ -14,6 +15,9 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, "llm");
+  if (limited) return limited;
+
   if (!hasLlm()) {
     return NextResponse.json(
       { error: "No LLM API key configured. Plain text search still works." },

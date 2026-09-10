@@ -6,6 +6,7 @@
  * fast and keeps the app working when TMDB is down or unkeyed.
  */
 
+import { cache } from "react";
 import { db } from "@/lib/db";
 import {
   AVAILABILITY_KIND,
@@ -18,6 +19,11 @@ import {
 import { RECOMMENDED_ORDER } from "@/data/catalog";
 import { endOfTodayUtc, monthsAgoUtc } from "@/lib/clock";
 import { pickCharacterWallpaper, type CharacterWallpaper } from "@/lib/character-art";
+import {
+  AVAILABILITY_REVALIDATE_SEC,
+  SEARCH_REVALIDATE_SEC,
+  catalogQuery,
+} from "@/lib/catalog-cache";
 
 /** Card-sized projection. Keep this narrow — rails render 100+ of these. */
 export const titleCardSelect = {
@@ -60,13 +66,19 @@ export type TitleCard = {
 // Ordering
 // ---------------------------------------------------------------------------
 
+const loadTitlesByRelease = catalogQuery(
+  "titles-by-release",
+  async (franchise: string, take: number) =>
+    db.title.findMany({
+      where: franchise === "*" ? undefined : { franchise },
+      orderBy: [{ releaseDate: "asc" }, { sortName: "asc" }],
+      take: take < 0 ? undefined : take,
+      select: titleCardSelect,
+    })
+);
+
 export async function getTitlesByRelease(franchise?: Franchise, take?: number): Promise<TitleCard[]> {
-  return db.title.findMany({
-    where: franchise ? { franchise } : undefined,
-    orderBy: [{ releaseDate: "asc" }, { sortName: "asc" }],
-    take,
-    select: titleCardSelect,
-  });
+  return loadTitlesByRelease(franchise ?? "*", take ?? -1);
 }
 
 /**
@@ -74,21 +86,29 @@ export async function getTitlesByRelease(franchise?: Franchise, take?: number): 
  * continuities like the Fox X-Men films) are appended by release date
  * rather than dropped, so the view is never lossy.
  */
+const loadTitlesByChrono = catalogQuery(
+  "titles-by-chrono",
+  async (franchise: string, take: number) => {
+    const where = franchise === "*" ? {} : { franchise };
+    const [placed, unplaced] = await Promise.all([
+      db.title.findMany({
+        where: { chronoOrder: { not: null }, ...where },
+        orderBy: { chronoOrder: "asc" },
+        select: titleCardSelect,
+      }),
+      db.title.findMany({
+        where: { chronoOrder: null, ...where },
+        orderBy: { releaseDate: "asc" },
+        select: titleCardSelect,
+      }),
+    ]);
+    const all = [...placed, ...unplaced];
+    return take < 0 ? all : all.slice(0, take);
+  }
+);
+
 export async function getTitlesByChrono(franchise?: Franchise, take?: number): Promise<TitleCard[]> {
-  const [placed, unplaced] = await Promise.all([
-    db.title.findMany({
-      where: { chronoOrder: { not: null }, ...(franchise ? { franchise } : {}) },
-      orderBy: { chronoOrder: "asc" },
-      select: titleCardSelect,
-    }),
-    db.title.findMany({
-      where: { chronoOrder: null, ...(franchise ? { franchise } : {}) },
-      orderBy: { releaseDate: "asc" },
-      select: titleCardSelect,
-    }),
-  ]);
-  const all = [...placed, ...unplaced];
-  return take ? all.slice(0, take) : all;
+  return loadTitlesByChrono(franchise ?? "*", take ?? -1);
 }
 
 export type PhaseGroup = {
@@ -97,7 +117,7 @@ export type PhaseGroup = {
   titles: TitleCard[];
 };
 
-export async function getTitlesByPhase(): Promise<PhaseGroup[]> {
+const loadTitlesByPhase = catalogQuery("titles-by-phase", async () => {
   const titles = await db.title.findMany({
     where: { phase: { not: null } },
     orderBy: [{ phase: "asc" }, { releaseDate: "asc" }],
@@ -116,46 +136,81 @@ export async function getTitlesByPhase(): Promise<PhaseGroup[]> {
   return [...groups.entries()]
     .sort(([a], [b]) => a - b)
     .map(([phase, ts]) => ({ phase, saga: PHASE_SAGA[phase] ?? null, titles: ts }));
+});
+
+export async function getTitlesByPhase(): Promise<PhaseGroup[]> {
+  return loadTitlesByPhase();
 }
 
 /** The curated newcomer path, in the hand-authored order. */
-export async function getRecommendedOrder(): Promise<TitleCard[]> {
+const loadRecommendedOrder = catalogQuery("recommended-order", async () => {
   const titles = await db.title.findMany({
-    where: { slug: { in: RECOMMENDED_ORDER } },
+    where: { slug: { in: [...RECOMMENDED_ORDER] } },
     select: titleCardSelect,
   });
   const bySlug = new Map(titles.map((t) => [t.slug, t]));
-  return RECOMMENDED_ORDER.map((s) => bySlug.get(s)).filter(
-    (t): t is TitleCard => Boolean(t)
-  );
+  return RECOMMENDED_ORDER.map((s) => bySlug.get(s)).filter((t): t is TitleCard => Boolean(t));
+});
+
+export async function getRecommendedOrder(): Promise<TitleCard[]> {
+  return loadRecommendedOrder();
 }
 
 // ---------------------------------------------------------------------------
 // Title detail
 // ---------------------------------------------------------------------------
 
-export async function getTitleBySlug(slug: string) {
-  return db.title.findUnique({
+const loadTitleMeta = catalogQuery("title-meta", async (slug: string) =>
+  db.title.findUnique({
+    where: { slug },
+    select: { name: true, overview: true, tagline: true },
+  })
+);
+
+/** Lightweight row for `generateMetadata` — skips episodes/videos. */
+export const getTitleMeta = cache(async (slug: string) => loadTitleMeta(slug));
+
+const loadTitleCatalog = catalogQuery("title-catalog", async (slug: string) =>
+  db.title.findUnique({
     where: { slug },
     include: {
       videos: { orderBy: { publishedAt: "desc" } },
       episodes: { orderBy: [{ season: "asc" }, { episode: "asc" }] },
       availability: { orderBy: { providerName: "asc" } },
-      localMedia: true,
-      progress: true,
-      library: true,
       appearances: {
         include: { character: { select: { slug: true, name: true, realName: true } } },
       },
     },
+  })
+);
+
+export const getTitleBySlug = cache(async (slug: string) => {
+  const catalog = await loadTitleCatalog(slug);
+  if (!catalog) return null;
+  // Library, progress and local files are per-viewer and must not share
+  // the catalog cache. This is the only SQLite hit on a warm title page.
+  const user = await db.title.findUnique({
+    where: { slug },
+    select: { localMedia: true, progress: true, library: true },
   });
-}
+  return {
+    ...catalog,
+    localMedia: user?.localMedia ?? [],
+    progress: user?.progress ?? [],
+    library: user?.library ?? [],
+  };
+});
 
 export type TitleDetail = NonNullable<Awaited<ReturnType<typeof getTitleBySlug>>>;
 
 /** Best single video to feature, by kind priority then recency. */
 export function pickFeaturedVideo<
-  T extends { kind: string; publishedAt?: Date | null; size?: number | null },
+  T extends {
+    kind: string;
+    publishedAt?: Date | null;
+    size?: number | null;
+    official?: boolean;
+  },
 >(videos: T[]): T | null {
   if (videos.length === 0) return null;
 
@@ -167,6 +222,8 @@ export function pickFeaturedVideo<
   return [...videos].sort((a, b) => {
     const byKind = rank(a.kind) - rank(b.kind);
     if (byKind !== 0) return byKind;
+    const byOfficial = Number(Boolean(b.official)) - Number(Boolean(a.official));
+    if (byOfficial !== 0) return byOfficial;
     const bySize = (b.size ?? 0) - (a.size ?? 0);
     if (bySize !== 0) return bySize;
     return (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0);
@@ -182,59 +239,73 @@ export function pickFeaturedVideo<
  * work so the front door looks like a Marvel billboard rather than a
  * random draw from 1998.
  */
-export async function getHeroTitles(count = 6) {
-  const select = { ...titleCardSelect, logoPath: true, overview: true };
-  const today = endOfTodayUtc();
-  const where = {
-    franchise: { in: [FRANCHISE.MCU, FRANCHISE.ANIMATED] },
-    releaseDate: { lte: today },
-  };
+const loadHeroTitles = catalogQuery(
+  "hero-titles",
+  async (count: number, day: string) => {
+    const select = { ...titleCardSelect, logoPath: true, overview: true };
+    const today = new Date(`${day}T23:59:59.999Z`);
+    const where = {
+      franchise: { in: [FRANCHISE.MCU, FRANCHISE.ANIMATED] },
+      releaseDate: { lte: today },
+    };
 
-  // Prefer titles with real backdrops. Before the first TMDB sync there
-  // are none, so fall back to the catalog itself — the billboard renders
-  // generated character art rather than showing nothing.
-  let pool = await db.title.findMany({
-    where,
-    orderBy: [{ releaseDate: "desc" }, { voteAverage: "desc" }],
-    take: 40,
-    select,
-  });
+    let pool = await db.title.findMany({
+      where,
+      orderBy: [{ releaseDate: "desc" }, { voteAverage: "desc" }],
+      take: 40,
+      select,
+    });
 
-  const withArt = pool.filter((t) => t.backdropPath);
-  if (withArt.length >= count) pool = withArt;
+    const withArt = pool.filter((t) => t.backdropPath);
+    if (withArt.length >= count) pool = withArt;
 
-  // Shuffle the strong pool so repeat visits differ, then take `count`.
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return pool.slice(0, count);
   }
-  return pool.slice(0, count);
+);
+
+export async function getHeroTitles(count = 6) {
+  return loadHeroTitles(count, endOfTodayUtc().toISOString().slice(0, 10));
 }
 
-/** Titles already released, newest first, rolling with the current date. */
-export async function getRecentTitles(take = 18): Promise<TitleCard[]> {
-  const today = endOfTodayUtc();
-  return db.title.findMany({
-    where: {
-      releaseDate: {
-        gte: monthsAgoUtc(30),
-        lte: today,
+const loadRecentTitles = catalogQuery(
+  "recent-titles",
+  async (take: number, day: string) => {
+    const today = new Date(`${day}T23:59:59.999Z`);
+    return db.title.findMany({
+      where: {
+        releaseDate: {
+          gte: monthsAgoUtc(30),
+          lte: today,
+        },
       },
-    },
-    orderBy: { releaseDate: "desc" },
-    take,
-    select: titleCardSelect,
-  });
+      orderBy: { releaseDate: "desc" },
+      take,
+      select: titleCardSelect,
+    });
+  }
+);
+
+export async function getRecentTitles(take = 18): Promise<TitleCard[]> {
+  return loadRecentTitles(take, endOfTodayUtc().toISOString().slice(0, 10));
 }
 
-/** Dated after today, soonest first. */
+const loadUpcomingTitles = catalogQuery(
+  "upcoming-titles",
+  async (take: number, day: string) =>
+    db.title.findMany({
+      where: { releaseDate: { gt: new Date(`${day}T23:59:59.999Z`) } },
+      orderBy: { releaseDate: "asc" },
+      take,
+      select: titleCardSelect,
+    })
+);
+
 export async function getUpcomingTitles(take = 12): Promise<TitleCard[]> {
-  return db.title.findMany({
-    where: { releaseDate: { gt: endOfTodayUtc() } },
-    orderBy: { releaseDate: "asc" },
-    take,
-    select: titleCardSelect,
-  });
+  return loadUpcomingTitles(take, endOfTodayUtc().toISOString().slice(0, 10));
 }
 
 export type ContinueWatchingRow = {
@@ -277,36 +348,42 @@ export async function continueWatching(limit = 12): Promise<ContinueWatchingRow[
  * Newly streamable titles, driven by Availability.firstSeenAt. This is the
  * "it shows up here the moment it lands" rail.
  */
+const loadNewlyAvailable = catalogQuery(
+  "newly-available",
+  async (region: string, days: number, limit: number) => {
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const rows = await db.availability.findMany({
+      where: {
+        region,
+        firstSeenAt: { gte: since },
+        kind: { in: [AVAILABILITY_KIND.FLATRATE, AVAILABILITY_KIND.FREE, AVAILABILITY_KIND.ADS] },
+      },
+      orderBy: { firstSeenAt: "desc" },
+      select: {
+        firstSeenAt: true,
+        providerName: true,
+        logoPath: true,
+        link: true,
+        title: { select: titleCardSelect },
+      },
+    });
+
+    const seen = new Set<string>();
+    const unique = [];
+    for (const r of rows) {
+      if (seen.has(r.title.id)) continue;
+      seen.add(r.title.id);
+      unique.push(r);
+      if (unique.length >= limit) break;
+    }
+    return unique;
+  },
+  AVAILABILITY_REVALIDATE_SEC
+);
+
 export async function getNewlyAvailable(region: string, days = 60, limit = 14) {
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-
-  const rows = await db.availability.findMany({
-    where: {
-      region,
-      firstSeenAt: { gte: since },
-      kind: { in: [AVAILABILITY_KIND.FLATRATE, AVAILABILITY_KIND.FREE, AVAILABILITY_KIND.ADS] },
-    },
-    orderBy: { firstSeenAt: "desc" },
-    select: {
-      firstSeenAt: true,
-      providerName: true,
-      logoPath: true,
-      link: true,
-      title: { select: titleCardSelect },
-    },
-  });
-
-  // One row per title — a title arriving on three providers at once is one
-  // piece of news, not three.
-  const seen = new Set<string>();
-  const unique = [];
-  for (const r of rows) {
-    if (seen.has(r.title.id)) continue;
-    seen.add(r.title.id);
-    unique.push(r);
-    if (unique.length >= limit) break;
-  }
-  return unique;
+  return loadNewlyAvailable(region, days, limit);
 }
 
 export async function getWatchlist(limit = 20) {
@@ -318,19 +395,23 @@ export async function getWatchlist(limit = 20) {
   });
 }
 
-export async function getFranchiseCounts() {
+const loadFranchiseCounts = catalogQuery("franchise-counts", async () => {
   const grouped = await db.title.groupBy({
     by: ["franchise"],
     _count: { _all: true },
   });
   return grouped.map((g) => ({ franchise: g.franchise, count: g._count._all }));
+});
+
+export async function getFranchiseCounts() {
+  return loadFranchiseCounts();
 }
 
 // ---------------------------------------------------------------------------
 // Characters
 // ---------------------------------------------------------------------------
 
-export async function getCharacterWithAppearances(slug: string) {
+const loadCharacterWithAppearances = catalogQuery("character-appearances", async (slug: string) => {
   const character = await db.character.findUnique({
     where: { slug },
     include: {
@@ -344,7 +425,11 @@ export async function getCharacterWithAppearances(slug: string) {
     ...character,
     wallpaper: pickCharacterWallpaper(character.appearances),
   };
-}
+});
+
+export const getCharacterWithAppearances = cache(async (slug: string) =>
+  loadCharacterWithAppearances(slug)
+);
 
 export type CharacterSummary = {
   slug: string;
@@ -356,13 +441,14 @@ export type CharacterSummary = {
 };
 
 /** Characters ordered by how much of the catalog they actually carry. */
-export async function getCharactersByPresence(): Promise<CharacterSummary[]> {
+const loadCharactersByPresence = catalogQuery("characters-by-presence", async () => {
   const characters = await db.character.findMany({
     include: {
       _count: { select: { appearances: true } },
       appearances: {
-        include: {
-          title: { select: { posterPath: true, backdropPath: true, slug: true } },
+        select: {
+          role: true,
+          title: { select: { slug: true, posterPath: true, backdropPath: true } },
         },
       },
     },
@@ -379,43 +465,60 @@ export async function getCharactersByPresence(): Promise<CharacterSummary[]> {
       appearanceCount: c._count.appearances,
       art: pickCharacterWallpaper(c.appearances),
     }));
+});
+
+export async function getCharactersByPresence(): Promise<CharacterSummary[]> {
+  return loadCharactersByPresence();
 }
 
 // ---------------------------------------------------------------------------
 // Search
 // ---------------------------------------------------------------------------
 
+const loadSearchTitles = catalogQuery(
+  "search-titles",
+  async (q: string, limit: number, deep: boolean) =>
+    db.title.findMany({
+      where: {
+        OR: deep
+          ? [{ name: { contains: q } }, { sortName: { contains: q } }, { overview: { contains: q } }, { tagline: { contains: q } }]
+          : [{ name: { contains: q } }, { sortName: { contains: q } }, { tagline: { contains: q } }],
+      },
+      orderBy: [{ voteAverage: "desc" }, { releaseDate: "desc" }],
+      take: limit,
+      select: titleCardSelect,
+    }),
+  SEARCH_REVALIDATE_SEC
+);
+
 /** Plain substring search — the instant path, no LLM round-trip. */
-export async function searchTitles(query: string, limit = 20): Promise<TitleCard[]> {
+export async function searchTitles(
+  query: string,
+  limit = 20,
+  opts?: { deep?: boolean }
+): Promise<TitleCard[]> {
   const q = query.trim();
   if (!q) return [];
-
-  return db.title.findMany({
-    where: {
-      OR: [
-        { name: { contains: q } },
-        { overview: { contains: q } },
-        { tagline: { contains: q } },
-      ],
-    },
-    orderBy: [{ voteAverage: "desc" }, { releaseDate: "desc" }],
-    take: limit,
-    select: titleCardSelect,
-  });
+  return loadSearchTitles(q, limit, Boolean(opts?.deep));
 }
 
-export async function getTitlesBySlugs(slugs: string[]): Promise<TitleCard[]> {
-  if (slugs.length === 0) return [];
+const loadTitlesBySlugs = catalogQuery("titles-by-slugs", async (joined: string) => {
+  const slugs = joined.split("\n").filter(Boolean);
+  if (slugs.length === 0) return [] as TitleCard[];
   const titles = await db.title.findMany({
     where: { slug: { in: slugs } },
     select: titleCardSelect,
   });
-  // Preserve the caller's ordering — the LLM ranks by relevance.
   const bySlug = new Map(titles.map((t) => [t.slug, t]));
   return slugs.map((s) => bySlug.get(s)).filter((t): t is TitleCard => Boolean(t));
+});
+
+export async function getTitlesBySlugs(slugs: string[]): Promise<TitleCard[]> {
+  if (slugs.length === 0) return [];
+  return loadTitlesBySlugs(slugs.join("\n"));
 }
 
-export async function getCatalogStats() {
+const loadCatalogStats = catalogQuery("catalog-stats", async () => {
   const [titles, films, series, episodes, videos, withArt, refreshed] = await Promise.all([
     db.title.count(),
     db.title.count({ where: { mediaType: "FILM" } }),
@@ -435,4 +538,8 @@ export async function getCatalogStats() {
     synced: withArt > 0,
     refreshedAt: refreshed?.value ? new Date(refreshed.value) : null,
   };
+});
+
+export async function getCatalogStats() {
+  return loadCatalogStats();
 }

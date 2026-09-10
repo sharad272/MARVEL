@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { LIBRARY_STATUS } from "@/lib/constants";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   titleId: z.string().min(1),
@@ -17,6 +18,8 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, "write");
+  if (limited) return limited;
   let payload: unknown;
   try {
     payload = await request.json();
