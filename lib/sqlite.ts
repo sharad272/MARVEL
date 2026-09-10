@@ -23,18 +23,18 @@ export function prepareSqliteUrl() {
   const raw = process.env.DATABASE_URL?.trim() || "file:./dev.db";
   process.env.DATABASE_URL = withSqliteParams(raw);
 
-  const serverless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+  // `VERCEL=1` is also set during `next build` and vercel-build scripts.
+  // Staging to /tmp there copied an early empty blob, then ISR pages
+  // (Characters, Timeline) baked "0 titles" into the CDN. Only do this
+  // in a real serverless function — Vercel sets VERCEL_REGION at runtime.
+  const serverless = Boolean(
+    process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL_REGION
+  );
   if (!serverless) return;
 
   const dest = "/tmp/marvelverse.db";
 
   try {
-    if (fs.existsSync(dest)) {
-      // Already staged by an earlier request on this warm instance.
-      process.env.DATABASE_URL = withSqliteParams(`file:${dest}`);
-      return;
-    }
-
     if (!DB_BASE64) {
       console.error(
         "[sqlite] no embedded db snapshot available — lib/generated/db-blob.ts is empty (did scripts/generate-db-blob.mjs run?)"
@@ -42,7 +42,11 @@ export function prepareSqliteUrl() {
       return;
     }
 
-    fs.writeFileSync(dest, Buffer.from(DB_BASE64, "base64"));
+    const bytes = Buffer.from(DB_BASE64, "base64");
+    const stale =
+      !fs.existsSync(dest) || fs.statSync(dest).size !== bytes.length;
+    if (stale) fs.writeFileSync(dest, bytes);
+
     process.env.DATABASE_URL = withSqliteParams(`file:${dest}`);
   } catch (err) {
     console.error("[sqlite] failed to stage db into /tmp:", err);

@@ -35,7 +35,7 @@ export function catalogQuery<Args extends unknown[], R>(
   fn: (...args: Args) => Promise<R>,
   revalidate = CATALOG_REVALIDATE_SEC
 ): (...args: Args) => Promise<R> {
-  const cached = unstable_cache(fn, [key], {
+  const cached = unstable_cache(fn, ["catalog-v2", key], {
     revalidate,
     tags: [CATALOG_TAG],
   });

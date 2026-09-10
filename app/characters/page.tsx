@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CharacterTile } from "@/components/character-tile";
 import { getCharactersByPresence } from "@/lib/queries";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Characters",

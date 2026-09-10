@@ -7,7 +7,7 @@ import { TitleCard } from "@/components/title-card";
 import { CharacterArc } from "@/components/character-arc";
 import { hasLlm } from "@/lib/llm/groq";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 type Params = { params: Promise<{ slug: string }> };
 type PageProps = Params & { searchParams: Promise<{ arc?: string }> };

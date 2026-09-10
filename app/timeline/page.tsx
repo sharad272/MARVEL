@@ -9,7 +9,7 @@ import { formatRuntime, formatYear } from "@/lib/utils";
 import { FRANCHISE } from "@/lib/constants";
 import { TitleWatcherActions } from "@/components/title-watcher-actions";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Timeline",
