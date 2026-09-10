@@ -17,6 +17,7 @@ import {
 } from "@/lib/constants";
 import { RECOMMENDED_ORDER } from "@/data/catalog";
 import { endOfTodayUtc, monthsAgoUtc } from "@/lib/clock";
+import { pickCharacterWallpaper, type CharacterWallpaper } from "@/lib/character-art";
 
 /** Card-sized projection. Keep this narrow — rails render 100+ of these. */
 export const titleCardSelect = {
@@ -330,7 +331,7 @@ export async function getFranchiseCounts() {
 // ---------------------------------------------------------------------------
 
 export async function getCharacterWithAppearances(slug: string) {
-  return db.character.findUnique({
+  const character = await db.character.findUnique({
     where: { slug },
     include: {
       appearances: {
@@ -338,17 +339,31 @@ export async function getCharacterWithAppearances(slug: string) {
       },
     },
   });
+  if (!character) return null;
+  return {
+    ...character,
+    wallpaper: pickCharacterWallpaper(character.appearances),
+  };
 }
 
+export type CharacterSummary = {
+  slug: string;
+  name: string;
+  realName: string | null;
+  bio: string | null;
+  appearanceCount: number;
+  art: CharacterWallpaper;
+};
+
 /** Characters ordered by how much of the catalog they actually carry. */
-export async function getCharactersByPresence() {
+export async function getCharactersByPresence(): Promise<CharacterSummary[]> {
   const characters = await db.character.findMany({
     include: {
       _count: { select: { appearances: true } },
       appearances: {
-        take: 1,
-        where: { role: "LEAD" },
-        include: { title: { select: { posterPath: true, backdropPath: true, slug: true } } },
+        include: {
+          title: { select: { posterPath: true, backdropPath: true, slug: true } },
+        },
       },
     },
   });
@@ -362,7 +377,7 @@ export async function getCharactersByPresence() {
       realName: c.realName,
       bio: c.bio,
       appearanceCount: c._count.appearances,
-      art: c.appearances[0]?.title ?? null,
+      art: pickCharacterWallpaper(c.appearances),
     }));
 }
 

@@ -1,11 +1,9 @@
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { getCharacterWithAppearances } from "@/lib/queries";
 import { getCharacter, themeVars, withAlpha } from "@/lib/characters";
-import { ArtFallback } from "@/components/art-fallback";
-import { backdropUrl } from "@/lib/tmdb/images";
+import { CoverArt } from "@/components/cover-art";
 import { TitleCard } from "@/components/title-card";
 import { CharacterArc } from "@/components/character-arc";
 import { hasLlm } from "@/lib/llm/groq";
@@ -43,41 +41,52 @@ export default async function CharacterPage({ params, searchParams }: PageProps)
       return (a.releaseDate?.getTime() ?? 0) - (b.releaseDate?.getTime() ?? 0);
     });
 
-  const leadTitle = character.appearances.find((a) => a.role === "LEAD")?.title;
-  const backdrop = backdropUrl(leadTitle?.backdropPath);
+  const wall = character.wallpaper;
 
   return (
     <div style={themeVars(theme)}>
-      <div className="relative min-h-[50vh] overflow-hidden">
-        {backdrop ? (
-          <Image src={backdrop} alt="" fill priority sizes="100vw" quality={75} className="object-cover object-top" />
-        ) : (
-          <ArtFallback name="" themeSlug={slug} variant="backdrop" />
-        )}
+      <div className="relative min-h-[min(72svh,440px)] sm:min-h-[50vh]">
+        {/* Wallpaper is clipped; copy sits above so the Ask button isn't
+            chopped off by the mobile tab bar. */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="relative h-full w-full">
+            <CoverArt
+              alt=""
+              name={character.name}
+              themeSlug={slug}
+              posterPath={wall.posterPath}
+              backdropPath={wall.backdropPath}
+              youtubeKey={wall.youtubeKey}
+              variant="backdrop"
+              backdropSize="w1280"
+              posterSize="w780"
+              sizes="100vw"
+              priority
+              className="object-cover object-[center_20%]"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(180deg, ${withAlpha(theme.primary, 0.28)} 0%, ${withAlpha(
+                  theme.secondary,
+                  0.35
+                )} 45%, rgba(8, 9, 12, 0.92) 100%)`,
+              }}
+            />
+            <div className="hero-scrim absolute inset-0 opacity-70" />
+          </div>
+        </div>
 
-        {/* Heavier character wash than a title page: this is the hero's own
-            room, not a film's. */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(150deg, ${withAlpha(theme.primary, 0.8)} 0%, ${withAlpha(
-              theme.secondary,
-              0.9
-            )} 100%)`,
-          }}
-        />
-        <div className="hero-scrim absolute inset-0" />
-
-        <div className="relative mx-auto flex min-h-[50vh] max-w-[1500px] items-end px-4 pb-10 pt-[calc(5.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-28 lg:px-10">
+        <div className="relative mx-auto flex min-h-[min(72svh,440px)] max-w-[1500px] items-end px-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] pt-[calc(5.5rem+env(safe-area-inset-top))] sm:min-h-[50vh] sm:px-6 sm:pb-10 sm:pt-28 lg:px-10">
           <div className="max-w-3xl">
-            <h1 className="title-stroke text-balance text-[2.25rem] font-black uppercase leading-[0.9] tracking-tight text-white drop-shadow-2xl sm:text-6xl lg:text-7xl">
+            <h1 className="title-stroke text-balance text-[2.15rem] font-black uppercase leading-[0.9] tracking-tight text-white drop-shadow-2xl sm:text-6xl lg:text-7xl">
               {character.name}
             </h1>
             {character.realName && character.realName !== character.name && (
-              <p className="mt-3 text-lg font-semibold text-white/85">{character.realName}</p>
+              <p className="mt-3 text-base font-semibold text-white/85 sm:text-lg">{character.realName}</p>
             )}
             {character.bio && (
-              <p className="mt-4 max-w-xl text-pretty text-lg italic leading-relaxed text-white/75">
+              <p className="mt-4 max-w-xl text-pretty text-[15px] italic leading-relaxed text-white/75 max-sm:line-clamp-4 sm:text-lg">
                 &ldquo;{character.bio}&rdquo;
               </p>
             )}
@@ -86,7 +95,7 @@ export default async function CharacterPage({ params, searchParams }: PageProps)
             </p>
             <Link
               href={`/ask?q=${encodeURIComponent(`Trace ${character.name}'s arc`)}`}
-              className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-black hover:scale-[1.02]"
+              className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-white px-5 py-2.5 text-sm font-bold text-black hover:scale-[1.02] sm:w-auto"
             >
               Ask about {character.name}
             </Link>
@@ -94,7 +103,7 @@ export default async function CharacterPage({ params, searchParams }: PageProps)
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1500px] px-4 py-10 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-[1500px] px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:px-10">
         <CharacterArc
           slug={slug}
           name={character.name}

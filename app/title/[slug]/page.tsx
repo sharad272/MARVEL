@@ -10,6 +10,7 @@ import {
   Layers,
   ExternalLink,
   HardDrive,
+  Sparkles,
 } from "lucide-react";
 import { getTitleBySlug, pickFeaturedVideo } from "@/lib/queries";
 import { getCharacter, themeVars } from "@/lib/characters";
@@ -35,6 +36,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 type Params = { params: Promise<{ slug: string }> };
+type PageProps = Params & { searchParams: Promise<{ insights?: string }> };
 
 export async function generateMetadata({ params }: Params) {
   const { slug } = await params;
@@ -46,9 +48,10 @@ export async function generateMetadata({ params }: Params) {
   };
 }
 
-export default async function TitlePage({ params }: Params) {
+export default async function TitlePage({ params, searchParams }: PageProps) {
   await connection();
   const { slug } = await params;
+  const { insights: insightsFlag } = await searchParams;
   const title = await getTitleBySlug(slug);
   if (!title) notFound();
 
@@ -183,10 +186,10 @@ export default async function TitlePage({ params }: Params) {
                 </p>
               )}
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                 <Link
                   href={`/watch/${title.slug}`}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-bold text-black shadow-xl transition-transform hover:scale-105 sm:w-auto sm:py-3"
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-bold text-black shadow-xl transition-transform hover:scale-105 sm:w-auto sm:py-3"
                 >
                   <Play className="h-4 w-4 fill-current" />
                   {localFile ? "Play movie" : "Play trailer"}
@@ -194,22 +197,31 @@ export default async function TitlePage({ params }: Params) {
                 {localFile && featured && (
                   <Link
                     href={`/watch/${title.slug}?src=trailer`}
-                    className="flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/20"
+                    className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/20"
                   >
                     Trailer
                   </Link>
                 )}
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+                  <Link
+                    href={`/ask?q=${encodeURIComponent(`What do I need to watch before ${title.name}?`)}`}
+                    className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/20"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Ask
+                  </Link>
+                  <Link
+                    href="?insights=1#insights"
+                    className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/20"
+                  >
+                    Generate
+                  </Link>
+                </div>
                 <LibraryButtons
                   titleId={title.id}
                   initialStatus={libraryEntry?.status ?? null}
                   initialFavorite={libraryEntry?.favorite ?? false}
                 />
-                <Link
-                  href={`/ask?q=${encodeURIComponent(`What do I need to watch before ${title.name}?`)}`}
-                  className="flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/20"
-                >
-                  Ask
-                </Link>
               </div>
 
               {localFile && (
@@ -224,10 +236,15 @@ export default async function TitlePage({ params }: Params) {
       </div>
 
       {/* --- Body -------------------------------------------------------- */}
-      <div className="mx-auto max-w-[1500px] px-4 py-10 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-[1500px] px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:px-10">
         <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
           <div className="min-w-0 space-y-12">
-            <TitleInsights slug={title.slug} name={title.name} llmEnabled={hasLlm()} />
+            <TitleInsights
+              slug={title.slug}
+              name={title.name}
+              llmEnabled={hasLlm()}
+              autoStart={Boolean(insightsFlag)}
+            />
 
             <section className="panel rounded-xl p-5">
               <AttachLocal titleId={title.id} slug={title.slug} />

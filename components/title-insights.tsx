@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Sparkles, ScrollText, ListChecks } from "lucide-react";
 import { ResultStrip } from "@/components/result-strip";
 import { WatcherLoader } from "@/components/watcher-loader";
@@ -20,16 +21,19 @@ export function TitleInsights({
   slug,
   name,
   llmEnabled = true,
+  autoStart = false,
 }: {
   slug: string;
   name: string;
   llmEnabled?: boolean;
+  autoStart?: boolean;
 }) {
   const liveEnabled = useLlmEnabled(llmEnabled);
   const [data, setData] = useState<Insights | null>(null);
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const started = useRef(false);
 
   const load = async () => {
     setLoading(true);
@@ -88,21 +92,36 @@ export function TitleInsights({
     }
   };
 
+  useEffect(() => {
+    if (!autoStart || !liveEnabled || started.current) return;
+    started.current = true;
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, liveEnabled, slug]);
+
+  const askHref = `/ask?q=${encodeURIComponent(`What do I need to watch before ${name}?`)}`;
+
   if (!liveEnabled) {
     return (
-      <p className="rounded-xl border border-white/10 bg-ink-850 p-4 text-sm text-white/50">
-        Recaps and watch-order are unavailable right now. Instant search and trailers still work.
-      </p>
+      <div id="insights" className="scroll-mt-[5.5rem] space-y-3 rounded-xl border border-white/10 bg-ink-850 p-4 sm:scroll-mt-28">
+        <p className="text-sm text-white/50">
+          Recaps and watch-order are unavailable right now. You can still ask in search.
+        </p>
+        <Link
+          href={askHref}
+          className="inline-flex min-h-11 items-center justify-center rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white hover:bg-white/20"
+        >
+          Ask about {name}
+        </Link>
+      </div>
     );
   }
 
   if (!data && !loading && !error) {
     return (
-      <button
-        type="button"
-        onClick={() => void load()}
-        aria-label={`Generate a briefing for ${name}`}
-        className="speedlines group flex w-full cursor-pointer flex-col items-stretch gap-3 rounded-xl border border-white/10 bg-ink-850 p-4 text-left transition-colors hover:border-[var(--c-primary)] sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+      <div
+        id="insights"
+        className="speedlines scroll-mt-[5.5rem] flex w-full flex-col items-stretch gap-3 rounded-xl border border-white/10 bg-ink-850 p-4 sm:scroll-mt-28 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
       >
         <span className="flex items-start gap-3">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary-grad text-white shadow-lg">
@@ -117,16 +136,29 @@ export function TitleInsights({
             </span>
           </span>
         </span>
-        <span className="shrink-0 self-start rounded-full bg-white/10 px-3.5 py-2 text-[11px] font-bold text-white transition-colors group-hover:bg-white group-hover:text-black sm:self-auto sm:py-1.5">
-          Generate
+        <span className="flex shrink-0 flex-col gap-2 self-stretch sm:flex-row sm:self-auto">
+          <button
+            type="button"
+            onClick={() => void load()}
+            aria-label={`Generate a briefing for ${name}`}
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-white px-4 py-2 text-[13px] font-bold text-black hover:scale-[1.02]"
+          >
+            Generate
+          </button>
+          <Link
+            href={askHref}
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-white/10 px-4 py-2 text-[13px] font-bold text-white hover:bg-white/20"
+          >
+            Ask
+          </Link>
         </span>
-      </button>
+      </div>
     );
   }
 
   if (error && !data?.recap && !data?.explanation) {
     return (
-      <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-4">
+      <div id="insights" className="scroll-mt-[5.5rem] rounded-xl border border-amber-500/25 bg-amber-500/10 p-4 sm:scroll-mt-28">
         <p className="text-sm font-semibold text-amber-300">Couldn&rsquo;t generate that</p>
         <p className="mt-1 text-[13px] leading-relaxed text-amber-200/70">{error}</p>
         <button
@@ -142,7 +174,7 @@ export function TitleInsights({
 
   if (loading && !data?.recap && !data?.explanation) {
     return (
-      <div className="rounded-xl border border-white/10 bg-ink-850 p-5">
+      <div id="insights" className="scroll-mt-[5.5rem] rounded-xl border border-white/10 bg-ink-850 p-5 sm:scroll-mt-28">
         <WatcherLoader label={`Reading the timeline for ${name}…`} />
       </div>
     );
@@ -151,7 +183,7 @@ export function TitleInsights({
   if (!data) return null;
 
   return (
-    <div className="space-y-5">
+    <div id="insights" className="scroll-mt-[5.5rem] space-y-5 sm:scroll-mt-28">
       {(data.recap || streaming) && (
         <section className="panel panel-accent rounded-xl p-5">
           <h2 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/50">

@@ -75,8 +75,8 @@ export function CoverArt({
 }: Props) {
   const tmdb =
     variant === "backdrop"
-      ? backdropUrl(backdropPath, backdropSize)
-      : posterUrl(posterPath, posterSize);
+      ? backdropUrl(backdropPath, backdropSize) ?? posterUrl(posterPath, posterSize)
+      : posterUrl(posterPath, posterSize) ?? backdropUrl(backdropPath, backdropSize);
   const initial: { src: string | null; step: Step } = tmdb
     ? { src: tmdb, step: "tmdb" }
     : youtubeKey

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Play, Star, Tv } from "lucide-react";
+import { Play, Star, Tv, Sparkles } from "lucide-react";
 import { getCharacter, themeVars } from "@/lib/characters";
 import { CoverArt } from "@/components/cover-art";
 import { officialTrailer } from "@/lib/videos";
@@ -124,6 +124,21 @@ export function TitleCard({
           ) : null}
         </div>
       </Link>
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 px-0.5 text-[11px] font-bold">
+        <Link
+          href={`/ask?q=${encodeURIComponent(`What do I need to watch before ${title.name}?`)}`}
+          className="inline-flex items-center gap-1 text-white/70 hover:text-white"
+        >
+          <Sparkles className="h-3 w-3" />
+          Ask
+        </Link>
+        <Link
+          href={`/title/${title.slug}?insights=1#insights`}
+          className="text-white/70 hover:text-white"
+        >
+          Generate
+        </Link>
+      </div>
     </div>
   );
 }
