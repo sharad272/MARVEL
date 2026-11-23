@@ -27,7 +27,7 @@ export default async function CharactersPage() {
           href="/codex"
           className="mt-4 inline-flex min-h-10 items-center rounded-full border border-white/15 bg-white/5 px-4 text-[13px] font-semibold text-white/80 hover:bg-white/10"
         >
-          Looking for someone else? Search 280+ characters in the Codex →
+          Looking for someone else? Rank 280+ characters in Strongest Character →
         </Link>
       </header>
 

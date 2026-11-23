@@ -19,6 +19,8 @@ import {
 import { RECOMMENDED_ORDER } from "@/data/catalog";
 import { endOfTodayUtc, monthsAgoUtc } from "@/lib/clock";
 import { pickCharacterWallpaper, type CharacterWallpaper } from "@/lib/character-art";
+import { CHARACTERS } from "@/lib/characters";
+import { officialTrailer } from "@/lib/videos";
 import {
   AVAILABILITY_REVALIDATE_SEC,
   SEARCH_REVALIDATE_SEC,
@@ -469,6 +471,45 @@ const loadCharactersByPresence = catalogQuery("characters-by-presence", async ()
 
 export async function getCharactersByPresence(): Promise<CharacterSummary[]> {
   return loadCharactersByPresence();
+}
+
+export type LeadFilmStill = { poster: string | null; trailer: string | null };
+
+/**
+ * The film built around each character: a movie named for them, otherwise
+ * the one branded with their theme. Released films outrank upcoming ones,
+ * and a real poster outranks a trailer frame.
+ */
+const loadLeadFilmStills = catalogQuery("lead-film-stills", async () => {
+  const films = await db.title.findMany({
+    where: { mediaType: "FILM" },
+    select: { slug: true, themeSlug: true, posterPath: true, voteAverage: true, releaseDate: true },
+  });
+  const now = Date.now();
+  const known = new Set(CHARACTERS.map((c) => c.slug));
+  const best = new Map<string, LeadFilmStill & { score: number }>();
+  for (const film of films) {
+    const trailer = officialTrailer(film.slug)?.key ?? null;
+    if (!film.posterPath && !trailer) continue;
+    const named = film.slug.replace(/-\d{4}$/, "");
+    // A film named for a character belongs to them (Morbius is filed under
+    // Blade's theme, but the movie is Morbius's). Otherwise the lead theme.
+    const owner = known.has(named) ? named : known.has(film.slug) ? film.slug : film.themeSlug;
+    if (!owner) continue;
+    const released = film.releaseDate != null && film.releaseDate.getTime() <= now;
+    const score = (released ? 1000 : 0) + (film.posterPath ? 200 : 0) + (film.voteAverage ?? 0);
+    const current = best.get(owner);
+    if (!current || score > current.score) {
+      best.set(owner, { poster: film.posterPath, trailer, score });
+    }
+  }
+  return Object.fromEntries(
+    [...best].map(([slug, row]) => [slug, { poster: row.poster, trailer: row.trailer }])
+  );
+});
+
+export async function getLeadFilmStills(): Promise<Record<string, LeadFilmStill>> {
+  return loadLeadFilmStills();
 }
 
 // ---------------------------------------------------------------------------

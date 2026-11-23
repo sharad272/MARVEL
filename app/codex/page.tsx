@@ -1,28 +1,38 @@
 import Link from "next/link";
 import { CodexSearch } from "@/components/codex/codex-search";
 import { codexList, powerScore, topRanked } from "@/lib/codex";
+import { filmStill } from "@/lib/film-still";
+import { getLeadFilmStills } from "@/lib/queries";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Codex · Any Marvel character",
+  title: "Strongest Character",
   description:
-    "Look up any Marvel character: their story, timeline, power stats and how they rank against everyone else.",
+    "Marvel characters ranked by power, with their story and how they compare. Movie posters when a film is built around them.",
 };
 
-export default function CodexPage() {
-  const items = codexList();
-  const top = topRanked(10);
+export default async function CodexPage() {
+  const stills = await getLeadFilmStills();
+  const items = codexList().map((item) => ({
+    ...item,
+    image: filmStill(item.characterSlug, stills, item.image),
+  }));
+  const top = topRanked(10).map((entry) => ({
+    ...entry,
+    image: filmStill(entry.characterSlug, stills, entry.image),
+  }));
 
   return (
     <div className="page-shell mx-auto max-w-[1600px] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:px-10">
-      <header className="mb-8 max-w-3xl">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--c-primary)]">The Codex</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">
-          Ask about any character in the multiverse
+      <header className="mb-8 max-w-2xl sm:mb-10">
+        <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+          Strongest Character
         </h1>
         <p className="mt-3 text-pretty text-[15px] leading-relaxed text-white/55 sm:text-base">
-          {items.length} Marvel heroes and villains, from the movies and far beyond. Open anyone
-          for their story, a timeline of their biggest moments, how powerful they are, and who
-          they&rsquo;d beat in a fight. Not listed? Type the name and ask the Watcher.
+          {items.length} Marvel heroes and villains, ranked by power. Open anyone for their
+          story, their timeline, and who they would beat. Not listed? Type the name and ask
+          the Watcher.
         </p>
       </header>
 
@@ -57,7 +67,8 @@ export default function CodexPage() {
       <CodexSearch items={items} />
 
       <p className="mt-10 max-w-2xl text-[11px] leading-relaxed text-white/30">
-        Power stats are fan ratings of the comics versions from the open{" "}
+        A character with their own film uses that movie&rsquo;s poster. Everyone else keeps the comic
+        image. Power stats are fan ratings of the comics versions from the open{" "}
         <a
           href="https://github.com/akabab/superhero-api"
           className="underline underline-offset-2 hover:text-white/60"

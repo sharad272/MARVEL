@@ -109,7 +109,7 @@ export default async function CharacterPage({ params, searchParams }: PageProps)
                 href={`/codex/${codex.key}`}
                 className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-full border border-white/30 bg-black/30 px-5 py-2.5 text-sm font-bold text-white backdrop-blur hover:bg-black/50 sm:ml-3 sm:mt-5 sm:w-auto"
               >
-                Power profile in the Codex
+                See their rank
               </Link>
             )}
           </div>

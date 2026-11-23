@@ -40,6 +40,7 @@ export type CodexListItem = {
   rank: number | null;
   alignment?: string;
   onScreen: boolean;
+  characterSlug: string | null;
 };
 
 const ENTRIES = raw as CodexEntry[];
@@ -95,6 +96,7 @@ export function codexList(): CodexListItem[] {
     rank: codexRank(e.key),
     alignment: e.alignment,
     onScreen: Boolean(e.characterSlug),
+    characterSlug: e.characterSlug,
   }));
 }
 

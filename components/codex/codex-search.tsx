@@ -104,7 +104,7 @@ export function CodexSearch({ items }: { items: CodexListItem[] }) {
         </button>
       )}
 
-      <ul className="mt-6 grid grid-cols-3 gap-2.5 sm:grid-cols-4 sm:gap-3 md:grid-cols-6 lg:grid-cols-8">
+      <ul className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {shown.map((c) => (
           <li key={c.key}>
             <Link

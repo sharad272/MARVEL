@@ -35,7 +35,7 @@ export function SiteFooter() {
               { href: "/timeline", label: "Timeline" },
               { href: "/multiverse", label: "Multiverse" },
               { href: "/characters", label: "Characters" },
-              { href: "/codex", label: "Codex" },
+              { href: "/codex", label: "Strongest Character" },
               { href: "/library", label: "My Library" },
               { href: "/ask", label: "Ask the Watcher" },
               { href: "/settings", label: "Settings" },

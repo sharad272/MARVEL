@@ -12,7 +12,7 @@ const NAV = [
   { href: "/timeline", label: "Timeline" },
   { href: "/multiverse", label: "Multiverse" },
   { href: "/characters", label: "Characters" },
-  { href: "/codex", label: "Codex" },
+  { href: "/codex", label: "Strongest Character" },
   { href: "/library", label: "My Library" },
   { href: "/settings", label: "Settings" },
 ];
@@ -63,7 +63,7 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 xl:flex">
           {NAV.map((item) => {
             const active =
               pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -72,7 +72,7 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "whitespace-nowrap rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors xl:px-3 xl:text-sm",
                   active
                     ? "bg-white/10 text-white"
                     : "text-white/65 hover:bg-white/5 hover:text-white"
@@ -98,7 +98,7 @@ export function SiteHeader() {
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
-            className="grid h-11 w-11 place-items-center rounded-md text-white/70 hover:bg-white/10 hover:text-white md:hidden"
+            className="grid h-11 w-11 place-items-center rounded-md text-white/70 hover:bg-white/10 hover:text-white xl:hidden"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
           >
@@ -108,7 +108,7 @@ export function SiteHeader() {
       </div>
 
       {menuOpen && (
-        <nav className="animate-fade-in fixed inset-x-0 top-[calc(3.5rem+env(safe-area-inset-top))] bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 overflow-y-auto border-t border-white/10 bg-ink-950 px-4 py-3 md:hidden">
+        <nav className="animate-fade-in fixed inset-x-0 top-[calc(3.5rem+env(safe-area-inset-top))] bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 overflow-y-auto border-t border-white/10 bg-ink-950 px-4 py-3 xl:hidden">
           {NAV.map((item) => (
             <Link
               key={item.href}

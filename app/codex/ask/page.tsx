@@ -5,7 +5,7 @@ import { hasLlm } from "@/lib/llm/groq";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Ask the Codex" };
+export const metadata = { title: "Strongest Character" };
 
 export default async function CodexAskPage({
   searchParams,
@@ -18,7 +18,7 @@ export default async function CodexAskPage({
   return (
     <div className="page-shell mx-auto max-w-3xl px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16">
       <Link href="/codex" className="text-[13px] font-semibold text-white/50 hover:text-white">
-        ← Codex
+        ← Strongest Character
       </Link>
       <h1 className="title-stroke mt-4 text-4xl font-black uppercase leading-[0.95] tracking-tight text-white sm:text-5xl">
         {name}

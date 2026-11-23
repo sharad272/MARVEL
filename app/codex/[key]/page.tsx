@@ -17,7 +17,8 @@ import {
 import raw from "@/data/generated/codex.json";
 import { getCharacter, themeVars } from "@/lib/characters";
 import { hasLlm } from "@/lib/llm/groq";
-import { getCharacterWithAppearances } from "@/lib/queries";
+import { filmStill } from "@/lib/film-still";
+import { getCharacterWithAppearances, getLeadFilmStills } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ type Params = { params: Promise<{ key: string }> };
 export async function generateMetadata({ params }: Params) {
   const { key } = await params;
   const e = getCodexEntry(key);
-  return { title: e ? `${e.name} · Codex` : "Codex" };
+  return { title: e ? `${e.name} · Strongest Character` : "Strongest Character" };
 }
 
 function toOption(e: CodexEntry): VersusOption {
@@ -54,18 +55,33 @@ function Neighbour({ e, dir }: { e: CodexEntry; dir: "up" | "down" }) {
 
 export default async function CodexEntryPage({ params }: Params) {
   const { key } = await params;
-  const e = getCodexEntry(key);
-  if (!e) notFound();
+  const found = getCodexEntry(key);
+  if (!found) notFound();
+  const stills = await getLeadFilmStills();
+  const e = {
+    ...found,
+    image: filmStill(found.characterSlug, stills, found.image),
+    imageLarge: filmStill(found.characterSlug, stills, found.imageLarge, "w780"),
+  };
 
   const theme = getCharacter(e.characterSlug ?? "marvel");
   const score = powerScore(e);
   const rank = codexRank(e.key);
-  const { stronger, weaker } = powerNeighbours(e.key, 3);
+  const neighbours = powerNeighbours(e.key, 3);
+  const face = (entry: CodexEntry) => ({
+    ...entry,
+    image: filmStill(entry.characterSlug, stills, entry.image, "w185"),
+  });
+  const stronger = neighbours.stronger.map(face);
+  const weaker = neighbours.weaker.map(face);
   const character = e.characterSlug ? await getCharacterWithAppearances(e.characterSlug) : null;
   const titles = (character?.appearances ?? [])
     .map((a) => a.title)
     .sort((a, b) => (a.releaseDate?.getTime() ?? 0) - (b.releaseDate?.getTime() ?? 0));
-  const options = (raw as CodexEntry[]).map(toOption);
+  const options = (raw as CodexEntry[]).map((entry) => ({
+    ...toOption(entry),
+    image: filmStill(entry.characterSlug, stills, entry.image, "w185"),
+  }));
   const llmEnabled = hasLlm();
 
   const facts = [
@@ -84,7 +100,7 @@ export default async function CodexEntryPage({ params }: Params) {
       className="page-shell mx-auto max-w-[1400px] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:px-10"
     >
       <Link href="/codex" className="text-[13px] font-semibold text-white/50 hover:text-white">
-        ← Codex
+        ← Strongest Character
       </Link>
 
       <div className="mt-4 grid gap-8 lg:grid-cols-[340px_minmax(0,1fr)] lg:grid-rows-[auto_1fr]">
