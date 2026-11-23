@@ -11,7 +11,7 @@ const TABS = [
     href: "/browse",
     label: "Browse",
     icon: Compass,
-    match: (p: string) => p.startsWith("/browse") || p.startsWith("/timeline"),
+    match: (p: string) => p.startsWith("/browse") || p.startsWith("/timeline") || p.startsWith("/multiverse"),
   },
   {
     href: "/characters",

@@ -10,6 +10,7 @@ import { SearchPalette } from "@/components/search-palette";
 const NAV = [
   { href: "/browse", label: "Browse" },
   { href: "/timeline", label: "Timeline" },
+  { href: "/multiverse", label: "Multiverse" },
   { href: "/characters", label: "Characters" },
   { href: "/library", label: "My Library" },
   { href: "/settings", label: "Settings" },
