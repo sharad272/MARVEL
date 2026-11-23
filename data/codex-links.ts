@@ -91,10 +91,8 @@ export const HERO_IDS: Record<string, number> = {
 export const WIKI_PORTRAITS: Record<string, string> = {
   "ms-marvel": "Kamala_Khan",
   "miles-morales": "Miles_Morales",
-  morbius: "Morbius,_the_Living_Vampire",
   "madame-web": "Madame_Web",
   "yelena-belova": "Yelena_Belova",
-  agatha: "Agatha_All_Along",
   "fantastic-four": "Fantastic_Four",
   avengers: "Avengers_(comics)",
   guardians: "Guardians_of_the_Galaxy_(2008_team)",

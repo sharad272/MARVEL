@@ -12,7 +12,7 @@ import {
   type CodexEntry,
 } from "@/lib/codex";
 
-const VERSION = "codex-v3";
+const VERSION = "codex-v4";
 
 export type CodexProfile = {
   key: string;
@@ -45,6 +45,8 @@ Rules:
   "Secret Wars", "The Infinity Gauntlet"). If unsure of a specific, leave
   it out or describe it generally ("in the 1960s comics").
 - Film/TV facts must come from the supplied catalog titles.
+- Do not invent how an origin happened. If the supplied data does not say
+  what caused a power, injury or transformation, leave that mechanism out.
 - Power stats are fan ratings (0-100) of the comics version. Treat them as
   a rough guide, not canon, and say so when it matters.
 - Clearly separate comics history from film/TV versions.

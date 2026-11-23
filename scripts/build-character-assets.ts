@@ -80,6 +80,38 @@ async function wikiImage(title: string): Promise<Buffer | null> {
   return null;
 }
 
+/** Files the dataset and Wikipedia summaries don't cover cleanly. */
+const DIRECT_PORTRAITS: Record<string, { url: string; position?: string; face?: boolean }> = {
+  agatha: {
+    url: "https://upload.wikimedia.org/wikipedia/en/9/93/Agatha_Harkness_%28Marvel_Comics%29.jpg",
+    position: "top",
+  },
+  morbius: {
+    url: "https://upload.wikimedia.org/wikipedia/en/2/2f/Morbius_%28film%29_poster.jpg",
+    face: true,
+  },
+};
+
+async function writeDirect(slug: string, src: Buffer, face: boolean, position: string) {
+  const out = path.join(ROOT, "public", "characters", `${slug}.webp`);
+  if (!face) {
+    await writePortrait(slug, src, position);
+    return;
+  }
+  const meta = await sharp(src).metadata();
+  const w = meta.width ?? 1;
+  const h = meta.height ?? 1;
+  const top = Math.round(h * 0.08);
+  const height = Math.round(h * 0.52);
+  const width = Math.min(w, Math.round(height * 0.75));
+  const left = Math.max(0, Math.round((w - width) / 2));
+  await sharp(src)
+    .extract({ left, top, width, height })
+    .resize(480, 640)
+    .webp({ quality: 82 })
+    .toFile(out);
+}
+
 async function writePortrait(slug: string, src: Buffer, position: string) {
   const out = path.join(ROOT, "public", "characters", `${slug}.webp`);
   await sharp(src)
@@ -111,8 +143,13 @@ async function main() {
     const out = path.join(ROOT, "public", "characters", `${c.slug}.webp`);
     if (existsSync(out) && !force) continue;
     try {
+      const direct = DIRECT_PORTRAITS[c.slug];
       const id = HERO_IDS[c.slug];
-      if (id) {
+      if (direct) {
+        const img = await fetchBuffer(direct.url);
+        await writeDirect(c.slug, img, Boolean(direct.face), direct.position ?? "top");
+        console.log(`  ✓ ${c.slug.padEnd(18)} ← direct`);
+      } else if (id) {
         const h = byId.get(id);
         if (!h) throw new Error(`hero ${id} not in dataset`);
         await writePortrait(c.slug, await fetchBuffer(h.images.lg), "top");
@@ -173,7 +210,8 @@ async function main() {
 
   // Registry characters the dataset lacks still get a (stat-less) entry.
   for (const c of CHARACTERS) {
-    if (HERO_IDS[c.slug] || !WIKI_PORTRAITS[c.slug]) continue;
+    if (HERO_IDS[c.slug]) continue;
+    if (!WIKI_PORTRAITS[c.slug] && !DIRECT_PORTRAITS[c.slug]) continue;
     if (["fantastic-four", "avengers", "guardians", "x-men", "eternals"].includes(c.slug)) continue;
     entries.push({
       key: c.slug,
