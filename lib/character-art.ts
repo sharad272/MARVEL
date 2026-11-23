@@ -1,11 +1,19 @@
 /**
- * Wallpaper for a character tile/hero: lead-title artwork first, then any
- * appearance with a poster/backdrop, then the official YouTube trailer
- * still. TMDB CDN paths work without an API key once we have the file
- * path; YouTube stills cover titles that were never synced.
+ * Wallpaper for a character tile/hero: the committed portrait from
+ * public/characters first (see scripts/build-character-assets.ts), then
+ * lead-title artwork, then any appearance with a poster/backdrop, then the
+ * official YouTube trailer still. TMDB CDN paths work without an API key
+ * once we have the file path; YouTube stills cover titles never synced.
  */
 
 import { officialTrailer } from "@/lib/videos";
+import portraitSlugs from "@/data/generated/portraits.json";
+
+const PORTRAITS = new Set<string>(portraitSlugs);
+
+export function characterPortrait(slug: string): string | null {
+  return PORTRAITS.has(slug) ? `/characters/${slug}.webp` : null;
+}
 
 export type AppearanceArt = {
   role?: string | null;
@@ -17,12 +25,16 @@ export type AppearanceArt = {
 };
 
 export type CharacterWallpaper = {
+  portrait: string | null;
   posterPath: string | null;
   backdropPath: string | null;
   youtubeKey: string | null;
 };
 
-export function pickCharacterWallpaper(appearances: AppearanceArt[]): CharacterWallpaper {
+export function pickCharacterWallpaper(
+  slug: string,
+  appearances: AppearanceArt[]
+): CharacterWallpaper {
   const ranked = [...appearances].sort((a, b) => score(b) - score(a));
 
   let posterPath: string | null = null;
@@ -39,7 +51,7 @@ export function pickCharacterWallpaper(appearances: AppearanceArt[]): CharacterW
     if (posterPath && backdropPath && youtubeKey) break;
   }
 
-  return { posterPath, backdropPath, youtubeKey };
+  return { portrait: characterPortrait(slug), posterPath, backdropPath, youtubeKey };
 }
 
 function score(row: AppearanceArt): number {

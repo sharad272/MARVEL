@@ -46,6 +46,7 @@ export function CharacterTile({
           alt=""
           name={name}
           themeSlug={slug}
+          imageSrc={art.portrait}
           posterPath={art.posterPath}
           backdropPath={art.backdropPath}
           youtubeKey={art.youtubeKey}

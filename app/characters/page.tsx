@@ -23,6 +23,12 @@ export default async function CharactersPage() {
           the catalog they carry. Open any one to trace their arc across every
           appearance in story order.
         </p>
+        <Link
+          href="/codex"
+          className="mt-4 inline-flex min-h-10 items-center rounded-full border border-white/15 bg-white/5 px-4 text-[13px] font-semibold text-white/80 hover:bg-white/10"
+        >
+          Looking for someone else? Search 280+ characters in the Codex →
+        </Link>
       </header>
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">

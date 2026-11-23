@@ -33,7 +33,9 @@ export function SiteFooter() {
             {[
               { href: "/browse", label: "Browse" },
               { href: "/timeline", label: "Timeline" },
+              { href: "/multiverse", label: "Multiverse" },
               { href: "/characters", label: "Characters" },
+              { href: "/codex", label: "Codex" },
               { href: "/library", label: "My Library" },
               { href: "/ask", label: "Ask the Watcher" },
               { href: "/settings", label: "Settings" },

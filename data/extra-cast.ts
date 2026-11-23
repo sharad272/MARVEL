@@ -1,0 +1,116 @@
+/**
+ * Supporting characters and villains, kept apart from the lead casts in
+ * data/catalog.ts so the multiverse roster can grow without touching
+ * every catalog entry. The seed merges both lists per title.
+ *
+ * Only on-screen appearances (or officially announced Doomsday cast).
+ */
+export const EXTRA_CAST: Record<string, string[]> = {
+  // MCU
+  "the-incredible-hulk": ["abomination"],
+  "captain-america-the-first-avenger": ["red-skull"],
+  "guardians-of-the-galaxy": ["nebula", "drax"],
+  "guardians-of-the-galaxy-vol-2": ["nebula", "drax"],
+  "avengers-age-of-ultron": ["ultron", "quicksilver"],
+  "spider-man-homecoming": ["vulture"],
+  "thor-ragnarok": ["hela"],
+  "avengers-infinity-war": ["red-skull", "nebula", "drax"],
+  "avengers-endgame": ["nebula", "drax"],
+  "spider-man-far-from-home": ["mysterio"],
+  "wandavision": ["agatha"],
+  "black-widow": ["yelena-belova"],
+  "what-if": ["ultron"],
+  "loki": ["kang"],
+  "hawkeye": ["yelena-belova", "kingpin"],
+  "spider-man-no-way-home": ["green-goblin", "doctor-octopus", "electro", "sandman", "lizard"],
+  "doctor-strange-in-the-multiverse-of-madness": ["black-bolt"],
+  "she-hulk-attorney-at-law": ["abomination"],
+  "black-panther-wakanda-forever": ["namor"],
+  "the-guardians-of-the-galaxy-holiday-special": ["nebula", "drax"],
+  "ant-man-and-the-wasp-quantumania": ["kang"],
+  "guardians-of-the-galaxy-vol-3": ["nebula", "drax"],
+  "the-marvels": ["beast"],
+  "echo": ["kingpin"],
+  "x-men-97": ["cyclops", "jean-grey", "storm", "rogue", "gambit", "beast", "nightcrawler"],
+  "deadpool-and-wolverine": ["x-23", "gambit", "elektra", "blade", "sabretooth"],
+  "agatha-all-along": ["agatha"],
+  "daredevil-born-again": ["kingpin"],
+  "thunderbolts": ["yelena-belova"],
+  "the-fantastic-four-first-steps": ["silver-surfer", "galactus"],
+  "avengers-doomsday": [
+    "doctor-doom",
+    "yelena-belova",
+    "professor-x",
+    "magneto",
+    "cyclops",
+    "mystique",
+    "beast",
+    "nightcrawler",
+    "gambit",
+  ],
+  "inhumans": ["black-bolt"],
+
+  // Netflix
+  "daredevil": ["kingpin", "elektra"],
+  "the-defenders": ["elektra"],
+
+  // Fox X-Men
+  "x-men": ["cyclops", "jean-grey", "storm", "mystique", "rogue", "sabretooth"],
+  "x2": ["cyclops", "jean-grey", "storm", "mystique", "rogue", "nightcrawler", "colossus"],
+  "x-men-the-last-stand": [
+    "cyclops",
+    "jean-grey",
+    "storm",
+    "mystique",
+    "rogue",
+    "beast",
+    "colossus",
+    "juggernaut",
+  ],
+  "x-men-origins-wolverine": ["sabretooth", "gambit", "cyclops"],
+  "x-men-first-class": ["mystique", "beast"],
+  "x-men-days-of-future-past": ["mystique", "beast", "storm", "quicksilver", "colossus"],
+  "deadpool": ["colossus"],
+  "x-men-apocalypse": [
+    "apocalypse",
+    "cyclops",
+    "jean-grey",
+    "storm",
+    "mystique",
+    "beast",
+    "nightcrawler",
+    "quicksilver",
+  ],
+  "logan": ["x-23"],
+  "deadpool-2": ["cable", "domino", "colossus", "juggernaut"],
+  "dark-phoenix": [
+    "jean-grey",
+    "cyclops",
+    "storm",
+    "mystique",
+    "beast",
+    "nightcrawler",
+    "quicksilver",
+  ],
+
+  // Spider-Man & Sony
+  "spider-man-2002": ["green-goblin"],
+  "spider-man-2": ["doctor-octopus"],
+  "spider-man-3": ["sandman"],
+  "the-amazing-spider-man": ["lizard"],
+  "the-amazing-spider-man-2": ["electro", "green-goblin"],
+  "spider-man-into-the-spider-verse": ["miles-morales", "spider-gwen", "kingpin", "doctor-octopus"],
+  "spider-man-across-the-spider-verse": ["miles-morales", "spider-gwen", "vulture"],
+  "venom-let-there-be-carnage": ["carnage"],
+  "morbius": ["morbius", "vulture"],
+  "madame-web": ["madame-web"],
+  "kraven-the-hunter": ["kraven"],
+
+  // Legacy
+  "daredevil-2003": ["kingpin", "elektra"],
+  "elektra": ["elektra"],
+  "fantastic-four-2005": ["doctor-doom"],
+  "fantastic-four-rise-of-the-silver-surfer": ["doctor-doom", "silver-surfer", "galactus"],
+  "ghost-rider": ["ghost-rider"],
+  "fantastic-four-2015": ["doctor-doom"],
+};

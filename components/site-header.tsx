@@ -12,6 +12,7 @@ const NAV = [
   { href: "/timeline", label: "Timeline" },
   { href: "/multiverse", label: "Multiverse" },
   { href: "/characters", label: "Characters" },
+  { href: "/codex", label: "Codex" },
   { href: "/library", label: "My Library" },
   { href: "/settings", label: "Settings" },
 ];

@@ -17,7 +17,7 @@ const TABS = [
     href: "/characters",
     label: "Heroes",
     icon: Users,
-    match: (p: string) => p.startsWith("/characters"),
+    match: (p: string) => p.startsWith("/characters") || p.startsWith("/codex"),
   },
   { href: "/ask", label: "Ask", icon: Sparkles, match: (p: string) => p.startsWith("/ask") },
   {

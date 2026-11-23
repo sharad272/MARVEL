@@ -11,6 +11,7 @@ import { PrismaClient } from "@prisma/client";
 import { CATALOG } from "../data/catalog";
 import { SEED_ART } from "../data/artwork";
 import { CHARACTERS } from "../lib/characters";
+import { EXTRA_CAST } from "../data/extra-cast";
 import { sortName } from "../lib/utils";
 
 const db = new PrismaClient();
@@ -92,11 +93,12 @@ async function main() {
   let appearances = 0;
 
   for (const t of CATALOG) {
-    if (!t.cast?.length) continue;
+    const cast = [...(t.cast ?? []), ...(EXTRA_CAST[t.slug] ?? [])];
+    if (!cast.length) continue;
     const title = await db.title.findUnique({ where: { slug: t.slug }, select: { id: true } });
     if (!title) continue;
 
-    for (const slug of new Set(t.cast)) {
+    for (const slug of new Set(cast)) {
       const character = await db.character.findUnique({ where: { slug }, select: { id: true } });
       if (!character) {
         console.warn(`    ! unknown character "${slug}" in ${t.slug}`);

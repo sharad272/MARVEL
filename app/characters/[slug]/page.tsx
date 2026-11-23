@@ -6,6 +6,7 @@ import { CoverArt } from "@/components/cover-art";
 import { TitleCard } from "@/components/title-card";
 import { CharacterArc } from "@/components/character-arc";
 import { hasLlm } from "@/lib/llm/groq";
+import { codexEntryForCharacter } from "@/lib/codex";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,7 @@ export default async function CharacterPage({ params, searchParams }: PageProps)
     });
 
   const wall = character.wallpaper;
+  const codex = codexEntryForCharacter(slug);
 
   return (
     <div style={themeVars(theme)}>
@@ -75,6 +77,13 @@ export default async function CharacterPage({ params, searchParams }: PageProps)
 
         <div className="relative mx-auto flex min-h-[min(72svh,440px)] max-w-[1500px] items-end px-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] pt-[calc(5.5rem+env(safe-area-inset-top))] sm:min-h-[50vh] sm:px-6 sm:pb-10 sm:pt-28 lg:px-10">
           <div className="max-w-3xl">
+            {wall.portrait && (
+              <img
+                src={wall.portrait}
+                alt=""
+                className="mb-4 h-28 w-[84px] rounded-xl object-cover object-top shadow-2xl ring-2 ring-white/20 sm:h-36 sm:w-[108px]"
+              />
+            )}
             <h1 className="title-stroke text-balance text-[2.15rem] font-black uppercase leading-[0.9] tracking-tight text-white drop-shadow-2xl sm:text-6xl lg:text-7xl">
               {character.name}
             </h1>
@@ -95,6 +104,14 @@ export default async function CharacterPage({ params, searchParams }: PageProps)
             >
               Ask about {character.name}
             </Link>
+            {codex && (
+              <Link
+                href={`/codex/${codex.key}`}
+                className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-full border border-white/30 bg-black/30 px-5 py-2.5 text-sm font-bold text-white backdrop-blur hover:bg-black/50 sm:ml-3 sm:mt-5 sm:w-auto"
+              >
+                Power profile in the Codex
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -423,7 +423,7 @@ const loadCharacterWithAppearances = catalogQuery("character-appearances", async
   if (!character) return null;
   return {
     ...character,
-    wallpaper: pickCharacterWallpaper(character.appearances),
+    wallpaper: pickCharacterWallpaper(character.slug, character.appearances),
   };
 });
 
@@ -463,7 +463,7 @@ const loadCharactersByPresence = catalogQuery("characters-by-presence", async ()
       realName: c.realName,
       bio: c.bio,
       appearanceCount: c._count.appearances,
-      art: pickCharacterWallpaper(c.appearances),
+      art: pickCharacterWallpaper(c.slug, c.appearances),
     }));
 });
 

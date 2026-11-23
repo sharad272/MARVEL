@@ -14,6 +14,8 @@ import {
 type Props = {
   alt: string;
   sizes: string;
+  /** Local image (e.g. a character portrait) tried before TMDB. */
+  imageSrc?: string | null;
   posterPath?: string | null;
   backdropPath?: string | null;
   youtubeKey?: string | null;
@@ -29,7 +31,7 @@ type Props = {
   className?: string;
 };
 
-type Step = "tmdb" | "max" | "hq" | "none";
+type Step = "local" | "tmdb" | "max" | "hq" | "none";
 
 // YouTube serves a tiny ~120x90 "no thumbnail available" placeholder
 // with an HTTP 200 (not a 404) when a video lacks a maxres/hq asset, so
@@ -40,8 +42,14 @@ const MIN_REAL_WIDTH = 300;
 
 function nextStep(
   step: Step,
-  youtubeKey?: string | null
+  youtubeKey?: string | null,
+  tmdb?: string | null
 ): { step: Step; src: string | null } {
+  if (step === "local") {
+    if (tmdb) return { step: "tmdb", src: tmdb };
+    if (youtubeKey) return { step: "max", src: youtubeThumb(youtubeKey, "max") };
+    return { step: "none", src: null };
+  }
   if (step === "tmdb" && youtubeKey) {
     return { step: "max", src: youtubeThumb(youtubeKey, "max") };
   }
@@ -61,6 +69,7 @@ function nextStep(
 export function CoverArt({
   alt,
   sizes,
+  imageSrc,
   posterPath,
   backdropPath,
   youtubeKey,
@@ -77,7 +86,9 @@ export function CoverArt({
     variant === "backdrop"
       ? backdropUrl(backdropPath, backdropSize) ?? posterUrl(posterPath, posterSize)
       : posterUrl(posterPath, posterSize) ?? backdropUrl(backdropPath, backdropSize);
-  const initial: { src: string | null; step: Step } = tmdb
+  const initial: { src: string | null; step: Step } = imageSrc
+    ? { src: imageSrc, step: "local" }
+    : tmdb
     ? { src: tmdb, step: "tmdb" }
     : youtubeKey
       ? { src: youtubeThumb(youtubeKey, "max"), step: "max" }
@@ -98,7 +109,7 @@ export function CoverArt({
   }
 
   const advance = () => {
-    const { step, src: nextSrc } = nextStep(stepRef.current, youtubeKey);
+    const { step, src: nextSrc } = nextStep(stepRef.current, youtubeKey, tmdb);
     stepRef.current = step;
     setSrc(nextSrc);
   };
@@ -116,7 +127,12 @@ export function CoverArt({
       onError={advance}
       onLoad={(e) => {
         const w = e.currentTarget.naturalWidth;
-        if (stepRef.current !== "none" && w > 0 && w < MIN_REAL_WIDTH) {
+        if (
+          stepRef.current !== "none" &&
+          stepRef.current !== "local" &&
+          w > 0 &&
+          w < MIN_REAL_WIDTH
+        ) {
           advance();
         }
       }}
